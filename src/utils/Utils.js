@@ -14,6 +14,18 @@ export const getCssVariable = (variable) => {
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 };
 
+const stripTrailingSlash = (url) => String(url || '').replace(/\/+$/, '');
+
+export const GLOBAL_CONFIG = {
+  // Backend service root, shared by all pages/components.
+  SERVER_BASE_URL: stripTrailingSlash(import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:5000'),
+  // Keep compatibility: explicit VITE_API_BASE_URL has higher priority.
+  API_BASE_URL: stripTrailingSlash(
+    import.meta.env.VITE_API_BASE_URL
+      || `${stripTrailingSlash(import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:5000')}/api`
+  ),
+};
+
 const adjustHexOpacity = (hexColor, opacity) => {
   // Remove the '#' if it exists
   hexColor = hexColor.replace('#', '');

@@ -1,0 +1,352 @@
+<template>
+  <div class="flex flex-col col-span-full sm:col-span-6 xl:col-span-3 bg-white dark:bg-gray-800 shadow-md rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer" @click="handleBarClick">
+    
+    <!-- 头部：使用加载后的 unitData (当前月快照) -->
+    <div class="px-4 pt-4 pb-3 flex justify-between items-start gap-3">
+      <div class="flex-1">
+        <header class="mb-1">
+          <h2 class="text-base font-bold text-gray-800 dark:text-gray-100">{{ config.title }}</h2>
+        </header>
+        <div class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{{ currentSnapshot?.org_name }}</div>
+        <div class="flex items-baseline gap-1.5">
+          <div class="text-2xl font-bold text-gray-900 dark:text-white">
+            {{ currentSnapshot?.[config.totalField] }}
+          </div>
+          <div class="text-xs text-gray-600 dark:text-gray-400">万元</div>
+        </div>
+      </div>
+
+      <!-- 圆环图：使用当前月的完成率 -->
+      <div class="flex-shrink-0">
+        <LiquidGaugeChart 
+          :value="completionRate"
+          :target-value="currentSnapshot[config.planField]"
+          :target="100"
+          :selected-month="selectedMonth"
+          :color="colors"
+          width="90" 
+          height="90" 
+          label="确保计划"
+        />
+      </div>
+    </div>
+
+    <!-- 折线图：固定高度且去除内边距 -->
+    <div class="h-[120px] overflow-hidden">
+      <LineChart 
+        :current-values="chartCurrentValues" 
+        :lastyear-values="chartLastYearValues" 
+        :target-values="chartTargetValues"
+        :layout-padding="0"
+      />
+    </div>
+
+    <!-- 弹窗：直接传入完整的原始数据数组 -->
+    <BaseModal
+      v-model="showModal"
+      :current-year-data="fullCurrentYearData" 
+      :last-year-data="fullLastYearData"
+      :selected-year="selectedYear"
+      :modal-config="modalConfig"
+    />
+  </div>
+</template>
+
+<script>
+import { ref, computed, watch } from 'vue'
+import LineChart from '../../charts/LineChart01.vue'
+import LiquidGaugeChart from '../../charts/LiquidGaugeChart.vue'
+import BaseModal from '../../components/BaseModal.vue'
+import { GLOBAL_CONFIG } from '../../utils/Utils'
+
+const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL;
+const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 67, 54, 0.7)'];
+
+export default {
+  name: 'BaseCard',
+  components: { 
+    LineChart, 
+    LiquidGaugeChart, 
+    BaseModal 
+  },
+  props: {
+    // 指标类型: 'charge', 'contract', 'earning', 'profit_total', 'cash', 'revenue', 'new_contract'
+    metricType: {
+      type: String,
+      required: true,
+      validator: (value) => ['charge', 'contract', 'earning', 'profit_total', 'cash', 'revenue', 'new_contract'].includes(value)
+    },
+    orgId: { 
+      type: [Number, String], 
+      required: true 
+    },
+    selectedYear: { 
+      type: Number, 
+      required: true 
+    },
+    selectedMonth: { 
+      type: Number, 
+      required: true 
+    },
+    modalChartType: {
+      type: String,
+      default: '',
+      validator: (value) => ['', 'bar', 'line'].includes(value),
+    }
+  },
+  setup(props) {
+    const showModal = ref(false);
+    
+    // 原始完整数据 (用于弹窗)
+    const fullCurrentYearData = ref([]);
+    const fullLastYearData = ref([]);
+    
+    // 加载状态
+    const isLoading = ref(false);
+
+    // 根据指标类型获取配置
+    const config = computed(() => {
+      const configs = {
+        charge: {
+          title: '净收费',
+          totalField: 'charge_total',
+          planField: 'charge_plan',
+          hasTarget: true,
+          dataField: 'charge_total',
+          modalTitle: '净收费合计趋势（万元）',
+          chartLabel: '净收费合计',
+          targetLabel: '年度目标 (净收费合计)',
+          actualLabel: '实际完成 (净收费合计)',
+          lastYearLabel: '上一年同期完成 (净收费合计)'
+        },
+        contract: {
+          title: '净合同',
+          totalField: 'contract_total',
+          planField: 'contract_plan',
+          hasTarget: true,
+          dataField: 'contract_total',
+          modalTitle: '净合同合计趋势（万元）',
+          chartLabel: '净合同合计',
+          targetLabel: '年度目标 (净合同合计)',
+          actualLabel: '实际完成 (净合同合计)',
+          lastYearLabel: '上一年同期完成 (净合同合计)'
+        },
+        earning: {
+          title: '收费口径利润',
+          totalField: 'earning',
+          planField: 'earning',
+          hasTarget: true,
+          dataField: 'earning',
+          modalTitle: '收费口径利润趋势（万元）',
+          chartLabel: '收费口径利润',
+          targetLabel: '年度目标 (收费口径利润)',
+          actualLabel: '实际完成 (收费口径利润)',
+          lastYearLabel: '上一年同期完成 (收费口径利润)'
+        },
+        profit_total: {
+          title: '利润总额',
+          totalField: 'profit_total',
+          planField: 'annual_plan_ensure_profit',
+          hasTarget: true,
+          dataField: 'profit_total',
+          modalTitle: '利润总额趋势（万元）',
+          chartLabel: '利润总额',
+          targetLabel: '年度目标 (利润总额)',
+          actualLabel: '实际完成 (利润总额)',
+          lastYearLabel: '上一年同期完成 (利润总额)'
+        },
+        cash: {
+          title: '经营性现金流',
+          totalField: 'cash',
+          planField: 'cash',
+          hasTarget: false,
+          dataField: 'cash',
+          modalTitle: '经营性现金流趋势（万元）',
+          chartLabel: '经营性现金流',
+          targetLabel: '年度目标 (经营性现金流)',
+          actualLabel: '实际完成 (经营性现金流)',
+          lastYearLabel: '上一年同期完成 (经营性现金流)'
+        },
+        revenue: {
+          title: '营业收入',
+          totalField: 'revenue_total',
+          planField: 'annual_plan_ensure_revenue',
+          hasTarget: true,
+          dataField: 'revenue_total',
+          modalTitle: '营业收入趋势（万元）',
+          chartLabel: '营业收入',
+          targetLabel: '年度目标 (营业收入)',
+          actualLabel: '实际完成 (营业收入)',
+          lastYearLabel: '上一年同期完成 (营业收入)'
+        },
+        new_contract: {
+          title: '新签合同',
+          totalField: 'new_contract_amount',
+          planField: 'annual_plan_ensure_contract',
+          hasTarget: true,
+          dataField: 'new_contract_amount',
+          modalTitle: '新签合同趋势（万元）',
+          chartLabel: '新签合同',
+          targetLabel: '年度目标 (新签合同)',
+          actualLabel: '实际完成 (新签合同)',
+          lastYearLabel: '上一年同期完成 (新签合同)'
+        }
+      };
+      return configs[props.metricType];
+    });
+
+    // 弹窗配置
+    const modalConfig = computed(() => ({
+      title: config.value.modalTitle,
+      targetLabel: config.value.targetLabel,
+      actualLabel: config.value.actualLabel,
+      lastYearLabel: config.value.lastYearLabel,
+      showTarget: config.value.hasTarget !== false,
+      dataField: config.value.dataField,
+      planField: config.value.planField,
+      chartType: props.modalChartType || 'bar',
+    }));
+
+    // 加载数据的核心函数
+    const loadData = async () => {
+      if (!props.orgId) return;
+      isLoading.value = true;
+      
+      try {
+        const params = new URLSearchParams({
+          org_id: props.orgId,
+          year: props.selectedYear,
+          month: props.selectedMonth
+        });
+
+        const response = await fetch(`${API_BASE_URL}/unit-performance?${params.toString()}`);
+        if (!response.ok) throw new Error('Fetch failed');
+        
+        const res = await response.json();
+        const allData = res.data || [];
+
+        // 数据清洗与分发
+        fullCurrentYearData.value = allData.filter(item => Math.floor(item.time_id / 100) === props.selectedYear);
+        fullLastYearData.value = allData.filter(item => Math.floor(item.time_id / 100) === props.selectedYear - 1);
+        
+        // 按月份排序（确保数据按时间顺序）
+        fullCurrentYearData.value.sort((a, b) => a.time_id - b.time_id);
+        fullLastYearData.value.sort((a, b) => a.time_id - b.time_id);
+        
+      } catch (e) {
+        console.error("加载数据失败", e);
+        fullCurrentYearData.value = [];
+        fullLastYearData.value = [];
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    // 监听年份/月份变化，自动重新加载
+    watch([() => props.selectedYear, () => props.selectedMonth], () => {
+      loadData();
+    }, { immediate: true });
+
+    // --- 辅助函数 ---
+
+    // 计算完成率（核心逻辑）
+    const calculateCompletionRate = (currentValue, targetValue) => {
+      if (!targetValue || targetValue === 0) return 0;
+      const current = parseFloat(currentValue) || 0;
+      const target = parseFloat(targetValue);
+      const rate = (current / target) * 100;
+      // 限制完成率在0-200之间，避免显示异常
+      return Math.min(Math.max(rate, 0), 200);
+    };
+
+    // 获取当前月份的数据
+    const getCurrentMonthData = () => {
+      if (!fullCurrentYearData.value.length) return null;
+      // 找到选中月份的数据
+      const currentMonthData = fullCurrentYearData.value.find(item => {
+        const month = item.time_id % 100;
+        return month === props.selectedMonth;
+      });
+      // 如果找不到精确月份，返回最后一条数据
+      return currentMonthData || fullCurrentYearData.value[fullCurrentYearData.value.length - 1];
+    };
+
+    // --- 计算属性：供模板使用 ---
+
+    // 1. 当前快照 (用于显示大字数字) -> 取选中月份的数据
+    const currentSnapshot = computed(() => {
+      return getCurrentMonthData() || {};
+    });
+
+    // 2. 圆环图数据 - 计算完成率
+    const completionRate = computed(() => {
+      const snapshot = currentSnapshot.value;
+      if (!snapshot) return 0;
+      
+      const currentValue = snapshot[config.value.totalField] || 0;
+      const targetValue = snapshot[config.value.planField] || 0;
+      
+      return calculateCompletionRate(currentValue, targetValue);
+    });
+
+    // 3. 折线图数据 (提取对应的合计数组)
+    const chartCurrentValues = computed(() => 
+      fullCurrentYearData.value.map(i => parseFloat(i[config.value.dataField]) || 0)
+    );
+    
+    const chartLastYearValues = computed(() => 
+      fullLastYearData.value.map(i => parseFloat(i[config.value.dataField]) || 0)
+    );
+
+    // 4. 折线图目标线（按月累计）
+    const chartTargetValues = computed(() => {
+      if (fullCurrentYearData.value.length === 0) return [];
+      
+      const snapshot = currentSnapshot.value;
+      const annualPlan = snapshot[config.value.planField] || 0;
+      
+      if (annualPlan === 0) return new Array(fullCurrentYearData.value.length).fill(0);
+      
+      // 按月累计计算目标值
+      return fullCurrentYearData.value.map((_, idx) => {
+        const monthlyTarget = annualPlan / 12;
+        const cumulativeTarget = monthlyTarget * (idx + 1);
+        return Math.round(cumulativeTarget * 100) / 100;
+      });
+    });
+
+    // 5. 月度完成率数据
+    const monthlyCompletionRates = computed(() => {
+      return fullCurrentYearData.value.map(item => {
+        const currentValue = item[config.value.totalField] || 0;
+        const targetValue = item[config.value.planField] || 0;
+        return calculateCompletionRate(currentValue, targetValue);
+      });
+    });
+
+    const handleBarClick = () => {
+      showModal.value = true;
+    };
+
+    return {
+      showModal,
+      currentSnapshot,
+      fullCurrentYearData,
+      fullLastYearData,
+      completionRate,
+      chartCurrentValues,
+      chartLastYearValues,
+      chartTargetValues,
+      monthlyCompletionRates,
+      config,
+      modalConfig,
+      colors,
+      handleBarClick,
+    };
+  }
+};
+</script>
+
+<style scoped>
+/* 样式优化 */
+</style>
