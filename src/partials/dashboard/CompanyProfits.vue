@@ -42,7 +42,7 @@
 
     <!-- 图表区域 -->
     <div class="h-[130px] overflow-hidden">
-      <LineChart :current-values="currentValues" :lastyear-values="lastYearValues" :target-values="targetValues" :layout-padding="0" />
+      <CardLIneChart :current-values="currentValues" :lastyear-values="lastYearValues" :target-values="targetValues" :layout-padding="0" />
     </div>
     <CompanyProfitModal
     v-model="showModal"
@@ -54,7 +54,7 @@
 <script>
 import { ref,computed } from 'vue'
 import { chartAreaGradient } from '../../charts/ChartjsConfig'
-import LineChart from '../../charts/LineChart01.vue'
+import CardLIneChart from '../../charts/CardLIneChart.vue'
 import DoughnutChart from '../../charts/DoughnutChart.vue'
 import CompanyProfitModal from '../../components/CompanyProfitModal.vue' 
 // Import utilities
@@ -63,7 +63,7 @@ const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL;
 export default {
   name: '公司利润总额',
   components: {
-    LineChart,
+    CardLIneChart,
     DoughnutChart,
     CompanyProfitModal
   },

@@ -3,17 +3,23 @@
     <div
       v-for="metric in metrics"
       :key="metric.field"
-      class="bg-white dark:bg-gray-800 rounded-lg shadow-md px-4 py-4 flex flex-col gap-2 cursor-pointer hover:shadow-lg transition-shadow"
+      class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-100/90 dark:border-gray-700/80 shadow-md px-4 py-4 flex flex-col gap-2 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
       @click="openModal(metric)"
     >
+      <span class="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full blur-2xl opacity-40" :class="metric.cardGlowClass"></span>
+      <span class="pointer-events-none absolute inset-0 metric-grid-overlay"></span>
+
+      <div class="relative z-10 flex flex-col gap-2">
       <!-- 标题 + 图标 -->
-      <div class="flex items-start justify-between">
-        <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ metric.label }}</span>
+      <div class="flex items-start justify-between gap-2">
+        <span class="text-sm font-semibold leading-5 text-gray-700 dark:text-gray-200">{{ metric.label }}</span>
         <div
-          class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ml-2"
-          :style="{ background: metric.bgGradient }"
+          class="relative w-12 h-12 rounded-2xl border flex items-center justify-center flex-shrink-0 overflow-hidden shadow-[0_12px_28px_rgba(15,23,42,0.14)]"
+          :class="metric.iconShellClass"
         >
-          <component :is="metric.icon" class="w-6 h-6 text-white" />
+          <span class="absolute inset-[3px] rounded-[12px] metric-orb-animate" :class="metric.iconOrbClass"></span>
+          <span class="absolute top-1 left-1 h-3.5 w-5.5 rounded-full bg-white/35 blur-[1px]"></span>
+          <component :is="metric.icon" class="w-6 h-6" :class="metric.iconClass" />
         </div>
       </div>
 
@@ -39,6 +45,7 @@
             : '--' }}
         </span>
       </div>
+      </div>
     </div>
   </div>
 
@@ -58,7 +65,7 @@
           <!-- 标题栏 -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-2">
-              <component :is="activeMetric?.icon" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <component :is="activeMetric?.icon" class="w-5 h-5" :class="activeMetric?.modalIconClass || 'text-gray-600 dark:text-gray-300'" />
               <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">{{ activeMetric?.label }}</h3>
               <span class="text-sm text-gray-500 dark:text-gray-400">{{ props.selectedYear }}年 1-{{ props.selectedMonth }}月</span>
             </div>
@@ -119,28 +126,33 @@ const props = defineProps({
 })
 
 // ---------- 内联 SVG 图标 (函数式组件) ----------
-const IconAsset = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }),
+const IconAsset = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M4 7h16M6 7v10m12-10v10M3 17h18M9.5 11.5h5M12 9v5' }),
 ])
 
-const IconROE = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7' }),
+const IconROE = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M4 16l5-5 3 3 7-7M16 7h3v3M4 20h16' }),
 ])
 
-const IconLabor = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5' }),
+const IconLabor = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M4 19h16M6 19V9l3 2 3-4 3 3 3-2v11' }),
+  h('circle', { cx: '9', cy: '7', r: '1.2' }),
+  h('circle', { cx: '15', cy: '6', r: '1.2' }),
 ])
 
-const IconResearch = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' }),
+const IconResearch = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M10 4v5l-4 7a2 2 0 001.7 3h8.6a2 2 0 001.7-3l-4-7V4' }),
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M9 12h6M8.5 15h7' }),
 ])
 
-const IconCashRatio = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }),
+const IconCashRatio = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M4 17V7m6 10V4m6 13v-6m4 6V9' }),
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M3 20h18' }),
 ])
 
-const IconCash = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, ...attrs }, [
-  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' }),
+const IconCash = (_, { attrs }) => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, ...attrs }, [
+  h('rect', { x: '3', y: '6', width: '18', height: '12', rx: '2.5' }),
+  h('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M7 12h10M9 9.5h6M9 14.5h6' }),
 ])
 
 // ---------- 指标配置 ----------
@@ -151,7 +163,11 @@ const metrics = [
     isPercent: true,
     unit: '%',
     higherIsBetter: false,
-    bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+    cardGlowClass: 'bg-violet-400/60 dark:bg-violet-500/40',
+    iconShellClass: 'border-violet-200/80 dark:border-violet-700/60 bg-violet-50/60 dark:bg-violet-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-violet-500 to-indigo-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-violet-600 dark:text-violet-300',
     icon: IconAsset,
   },
   {
@@ -160,7 +176,11 @@ const metrics = [
     isPercent: true,
     unit: '%',
     higherIsBetter: true,
-    bgGradient: 'linear-gradient(135deg, #16a34a, #22c55e)',
+    cardGlowClass: 'bg-emerald-400/60 dark:bg-emerald-500/40',
+    iconShellClass: 'border-emerald-200/80 dark:border-emerald-700/60 bg-emerald-50/60 dark:bg-emerald-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-emerald-500 to-teal-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-emerald-600 dark:text-emerald-300',
     icon: IconROE,
   },
   {
@@ -169,7 +189,11 @@ const metrics = [
     isPercent: false,
     unit: '万元/人',
     higherIsBetter: true,
-    bgGradient: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+    cardGlowClass: 'bg-blue-400/60 dark:bg-blue-500/40',
+    iconShellClass: 'border-blue-200/80 dark:border-blue-700/60 bg-blue-50/60 dark:bg-blue-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-blue-600 dark:text-blue-300',
     icon: IconLabor,
   },
   {
@@ -178,7 +202,11 @@ const metrics = [
     isPercent: true,
     unit: '%',
     higherIsBetter: true,
-    bgGradient: 'linear-gradient(135deg, #ea580c, #f97316)',
+    cardGlowClass: 'bg-orange-400/60 dark:bg-orange-500/40',
+    iconShellClass: 'border-orange-200/80 dark:border-orange-700/60 bg-orange-50/60 dark:bg-orange-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-orange-500 to-amber-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-orange-600 dark:text-orange-300',
     icon: IconResearch,
   },
   {
@@ -187,7 +215,11 @@ const metrics = [
     isPercent: true,
     unit: '%',
     higherIsBetter: true,
-    bgGradient: 'linear-gradient(135deg, #9333ea, #c026d3)',
+    cardGlowClass: 'bg-fuchsia-400/60 dark:bg-fuchsia-500/40',
+    iconShellClass: 'border-fuchsia-200/80 dark:border-fuchsia-700/60 bg-fuchsia-50/60 dark:bg-fuchsia-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-fuchsia-500 to-purple-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-fuchsia-600 dark:text-fuchsia-300',
     icon: IconCashRatio,
   },
   {
@@ -196,7 +228,11 @@ const metrics = [
     isPercent: false,
     unit: '万元',
     higherIsBetter: true,
-    bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)',
+    cardGlowClass: 'bg-cyan-400/60 dark:bg-cyan-500/40',
+    iconShellClass: 'border-cyan-200/80 dark:border-cyan-700/60 bg-cyan-50/60 dark:bg-cyan-900/20',
+    iconOrbClass: 'bg-gradient-to-br from-cyan-500 to-sky-500',
+    iconClass: 'relative text-white',
+    modalIconClass: 'text-cyan-600 dark:text-cyan-300',
     icon: IconCash,
   },
 ]
@@ -328,3 +364,29 @@ const formatDisplay = (val, metric) => {
 onMounted(loadData)
 watch([() => props.selectedYear, () => props.selectedMonth], loadData)
 </script>
+
+<style scoped>
+.metric-grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent 70%);
+}
+
+.metric-orb-animate {
+  animation: orbPulse 3.2s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: saturate(1.15);
+  }
+}
+</style>

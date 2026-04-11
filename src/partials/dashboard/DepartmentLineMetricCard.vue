@@ -105,6 +105,11 @@ const renderChart = () => {
           borderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6,
+          pointBackgroundColor: props.primaryColor,
+          pointBorderColor: props.primaryColor,
+          pointHoverBackgroundColor: props.primaryColor,
+          pointHoverBorderColor: props.primaryColor,
+          pointBorderWidth: 0,
           tension: 0.25,
         },
         ...(props.secondaryMetricKey
@@ -118,6 +123,11 @@ const renderChart = () => {
                 borderWidth: 2,
                 pointRadius: 3,
                 pointHoverRadius: 5,
+                pointBackgroundColor: props.secondaryColor,
+                pointBorderColor: props.secondaryColor,
+                pointHoverBackgroundColor: props.secondaryColor,
+                pointHoverBorderColor: props.secondaryColor,
+                pointBorderWidth: 0,
                 tension: 0.25,
               },
             ]
@@ -130,9 +140,24 @@ const renderChart = () => {
         legend: { display: !!props.secondaryMetricKey, position: 'top' },
         tooltip: {
           callbacks: {
-            label: (context) => `${context.dataset.label}: ${formatMetricValue(context.parsed.y)}`,
+            label: (context) => {
+              if (!props.secondaryMetricKey) {
+                return `${context.dataset.label}: ${formatMetricValue(context.parsed.y)}`
+              }
+
+              if (context.datasetIndex !== 0) return null
+
+              const idx = context.dataIndex
+              const primaryText = `${props.primaryLabel || props.title}: ${formatMetricValue(values[idx])}`
+              const secondaryText = `${props.secondaryLabel || '第二指标'}: ${formatMetricValue(secondaryValues[idx])}`
+              return `${primaryText} | ${secondaryText}`
+            },
           },
         },
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false,
       },
       scales: {
         y: {

@@ -30,7 +30,7 @@
 
     <!-- 折线图：使用加载后的序列数据 -->
     <div class="grow max-sm:max-h-[128px] xl:max-h-[128px]">
-      <LineChart 
+      <CardLIneChart 
         :current-values="chartCurrentValues" 
         :lastyear-values="chartLastYearValues" 
         :target-values="chartTargetValues" 
@@ -50,7 +50,7 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
-import LineChart from '../../charts/LineChart01.vue'
+import CardLIneChart from '../../charts/CardLIneChart.vue'
 import DoughnutChart from '../../charts/DoughnutChart01.vue'
 import LiquidGaugeChart from '../../charts/LiquidGaugeChart.vue'
 import BaseContractModal from '../../components/BaseContractModal.vue' 
@@ -62,7 +62,7 @@ const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 6
 
 export default {
   name: 'CompanyTotalProfit',
-  components: { LineChart, DoughnutChart, BaseContractModal, LiquidGaugeChart },
+  components: { CardLIneChart, DoughnutChart, BaseContractModal, LiquidGaugeChart },
   props: {
     // 不再需要外部传入复杂的数组，只需要标识符
     orgId: { type: [Number, String], required: true }, 

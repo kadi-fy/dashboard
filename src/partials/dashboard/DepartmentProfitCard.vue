@@ -82,10 +82,37 @@ const valuePlugin = {
 			if (!Number.isFinite(value)) return
 
 			const x = bar.x
-			const y = value >= 0 ? bar.y + 20 : bar.y - 10
-			ctx.fillStyle = '#f8fafc'
-			ctx.fillText(`${Math.round(value)}万`, x, y)
-			ctx.fillText('元', x, y + 14)
+			const valueText = `${Math.round(value)}`
+			const unitText = '万元'
+			const barHeight = Math.abs(bar.base - bar.y)
+			const showOutside = barHeight < 40
+
+			if (showOutside) {
+				const isPositive = value >= 0
+				const badgeWidth = Math.max(ctx.measureText(`${valueText}${unitText}`).width + 18, 56)
+				const badgeHeight = 20
+				const by = isPositive ? bar.y - 28 : bar.base + 8
+				const bx = x - badgeWidth / 2
+
+				ctx.fillStyle = isPositive ? 'rgba(236, 253, 245, 0.96)' : 'rgba(254, 242, 242, 0.96)'
+				ctx.strokeStyle = isPositive ? 'rgba(110, 231, 183, 0.95)' : 'rgba(252, 165, 165, 0.95)'
+				ctx.lineWidth = 1
+				ctx.beginPath()
+				ctx.roundRect(bx, by, badgeWidth, badgeHeight, 5)
+				ctx.fill()
+				ctx.stroke()
+
+				ctx.fillStyle = isPositive ? '#047857' : '#b91c1c'
+				ctx.font = 'bold 11px sans-serif'
+				const arrow = isPositive ? '↑' : '↓'
+				ctx.fillText(`${arrow}${valueText}`, x, by + 13)
+			} else {
+				const centerY = bar.y + (bar.base - bar.y) / 2
+				ctx.fillStyle = '#f8fafc'
+				ctx.font = 'bold 11px sans-serif'
+				ctx.fillText(valueText, x, centerY - 3)
+				ctx.fillText(unitText, x, centerY + 11)
+			}
 		})
 
 		ctx.restore()
@@ -115,7 +142,9 @@ const renderChart = () => {
 					label: '利润',
 					data: profits,
 					borderRadius: 6,
-					maxBarThickness: 38,
+					categoryPercentage: 0.8,
+					barPercentage: 0.86,
+					maxBarThickness: 48,
 					backgroundColor: (context) => {
 						const area = context.chart.chartArea
 						if (!area) return '#9acfa1'

@@ -109,6 +109,17 @@ const getCompletionColors = (completion, monthNumber) => {
 	return ['rgba(242, 127, 127, 0.95)', 'rgba(250, 192, 192, 0.95)']
 }
 
+const getCompletionLabelTheme = (completion, monthNumber) => {
+	const expected = monthNumber / 12
+	if (completion >= expected) {
+		return { bg: '#ecfdf3', border: '#86efac', text: '#15803d' }
+	}
+	if (completion >= expected * 0.8) {
+		return { bg: '#fffbeb', border: '#fcd34d', text: '#b45309' }
+	}
+	return { bg: '#fff1f2', border: '#fda4af', text: '#be123c' }
+}
+
 const completionLabelPlugin = {
 	id: `completion-label-${Math.random().toString(36).slice(2)}`,
 	afterDatasetsDraw(c) {
@@ -126,6 +137,8 @@ const completionLabelPlugin = {
 			const value = ds.actualValues?.[i]
 			const pct = ds.percentValues?.[i]
 			if (!Number.isFinite(value) || !Number.isFinite(pct)) return
+			const completion = toNum(pct) / 100
+			const labelTheme = getCompletionLabelTheme(completion, props.selectedMonth)
 
 			const x = bar.x
 			const y = bar.y
@@ -135,19 +148,20 @@ const completionLabelPlugin = {
 			const bx = x - w / 2
 			const by = y - 25
 
-			ctx.fillStyle = '#f0fdf4'
-			ctx.strokeStyle = '#bfdbfe'
+			ctx.fillStyle = labelTheme.bg
+			ctx.strokeStyle = labelTheme.border
 			ctx.lineWidth = 1
 			ctx.beginPath()
 			ctx.roundRect(bx, by, w, h, 5)
 			ctx.fill()
 			ctx.stroke()
 
-			ctx.fillStyle = '#16a34a'
+			ctx.fillStyle = labelTheme.text
 			ctx.fillText(pctText, x, by + 14)
 			ctx.fillStyle = '#f8fafc'
-			ctx.fillText(`${Math.round(value)}`, x, y + 20)
-			ctx.fillText('万元', x, y + 34)
+			const centerY = y + bar.height / 2
+			ctx.fillText(`${Math.round(value)}`, x, centerY - 3)
+			ctx.fillText('万元', x, centerY + 9)
 		})
 
 		ctx.restore()

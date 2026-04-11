@@ -18,7 +18,22 @@
 
       <!-- 圆环图：使用当前月的完成率 -->
       <div class="flex-shrink-0">
+        <div
+          v-if="showValueStatusBadge"
+          class="relative flex h-[90px] w-[90px] items-center justify-center rounded-full border-[10px] bg-white dark:bg-gray-800"
+          :class="statusBadgeClass"
+        >
+          <div class="absolute inset-[10px] rounded-full bg-gray-50 dark:bg-gray-900"></div>
+          <div
+            class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-800"
+            :class="statusAccentClass"
+          >
+            <span class="text-[18px] leading-none">{{ statusIcon }}</span>
+          </div>
+          <div class="absolute bottom-[18px] h-1.5 w-1.5 rounded-full bg-current/50"></div>
+        </div>
         <LiquidGaugeChart 
+          v-else
           :value="completionRate"
           :target-value="currentSnapshot[config.planField]"
           :target="100"
@@ -33,7 +48,7 @@
 
     <!-- 折线图：固定高度且去除内边距 -->
     <div class="h-[120px] overflow-hidden">
-      <LineChart 
+      <CardLIneChart 
         :current-values="chartCurrentValues" 
         :lastyear-values="chartLastYearValues" 
         :target-values="chartTargetValues"
@@ -54,7 +69,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
-import LineChart from '../../charts/LineChart01.vue'
+import CardLIneChart from '../../charts/CardLIneChart.vue'
 import LiquidGaugeChart from '../../charts/LiquidGaugeChart.vue'
 import BaseModal from '../../components/BaseModal.vue'
 import { GLOBAL_CONFIG } from '../../utils/Utils'
@@ -65,7 +80,7 @@ const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 6
 export default {
   name: 'BaseCard',
   components: { 
-    LineChart, 
+    CardLIneChart, 
     LiquidGaugeChart, 
     BaseModal 
   },
@@ -135,7 +150,7 @@ export default {
           title: '收费口径利润',
           totalField: 'earning',
           planField: 'earning',
-          hasTarget: true,
+          hasTarget: false,
           dataField: 'earning',
           modalTitle: '收费口径利润趋势（万元）',
           chartLabel: '收费口径利润',
@@ -278,8 +293,42 @@ export default {
       return getCurrentMonthData() || {};
     });
 
+    const showValueStatusBadge = computed(() => ['earning', 'cash'].includes(props.metricType));
+
+    const statusValue = computed(() => {
+      const snapshot = currentSnapshot.value;
+      return parseFloat(snapshot?.[config.value.totalField]) || 0;
+    });
+
+    const statusIcon = computed(() => {
+      if (statusValue.value > 0) return '▲';
+      if (statusValue.value < 0) return '▼';
+      return '●';
+    });
+
+    const statusBadgeClass = computed(() => {
+      if (statusValue.value > 0) {
+        return 'border-emerald-200 text-emerald-600 dark:border-emerald-900/70 dark:text-emerald-400';
+      }
+      if (statusValue.value < 0) {
+        return 'border-rose-200 text-rose-600 dark:border-rose-900/70 dark:text-rose-400';
+      }
+      return 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-400';
+    });
+
+    const statusAccentClass = computed(() => {
+      if (statusValue.value > 0) {
+        return 'text-emerald-600 dark:text-emerald-400';
+      }
+      if (statusValue.value < 0) {
+        return 'text-rose-600 dark:text-rose-400';
+      }
+      return 'text-slate-500 dark:text-slate-300';
+    });
+
     // 2. 圆环图数据 - 计算完成率
     const completionRate = computed(() => {
+      if (!config.value.hasTarget) return 0;
       const snapshot = currentSnapshot.value;
       if (!snapshot) return 0;
       
@@ -300,6 +349,7 @@ export default {
 
     // 4. 折线图目标线（按月累计）
     const chartTargetValues = computed(() => {
+      if (!config.value.hasTarget) return [];
       if (fullCurrentYearData.value.length === 0) return [];
       
       const snapshot = currentSnapshot.value;
@@ -334,6 +384,10 @@ export default {
       fullCurrentYearData,
       fullLastYearData,
       completionRate,
+      showValueStatusBadge,
+      statusIcon,
+      statusBadgeClass,
+      statusAccentClass,
       chartCurrentValues,
       chartLastYearValues,
       chartTargetValues,

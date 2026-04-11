@@ -8,17 +8,14 @@ import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 
 import {
-  Chart, LineController, LineElement, Filler, PointElement, LinearScale, TimeScale, CategoryScale, Tooltip,
+  Chart, LineController, LineElement, Filler, PointElement, LinearScale, TimeScale, CategoryScale, Tooltip, Legend,
 } from 'chart.js'
 import 'chartjs-adapter-moment'
 
-// Import utilities
-import { formatValue } from '../utils/Utils'
-
-Chart.register(LineController, LineElement, Filler, PointElement, LinearScale, TimeScale, CategoryScale, Tooltip)
+Chart.register(LineController, LineElement, Filler, PointElement, LinearScale, TimeScale, CategoryScale, Tooltip, Legend)
 
 export default {
-  name: 'LineChart01',
+  name: 'CardLIneChart',
   props: {
     data: {
       type: Object,
@@ -50,6 +47,11 @@ export default {
     },
   },
   setup(props) {
+
+    const formatChineseAmount = (value) => {
+      const numericValue = Number(value) || 0
+      return `${numericValue.toLocaleString('zh-CN')}万元`
+    }
 
     const canvas = ref(null)
     let chart = null
@@ -130,28 +132,45 @@ export default {
             unit: 'month',
           },
           display: false,
+          grid: {
+            display: false,
+          },
         } : {
           type: 'category',
           display: false,
+          grid: {
+            display: false,
+          },
         },
       },
       plugins: {
         tooltip: {
+          mode: 'index',
+          intersect: false,
+          displayColors: true,
           callbacks: {
-            title: () => false,
-            label: (context) => formatValue(context.parsed.y),
+            title: (items) => items[0]?.label || false,
+            label: (context) => `${context.dataset.label}: ${formatChineseAmount(context.parsed.y)}`,
           },
           bodyColor: darkMode.value ? tooltipBodyColor.dark : tooltipBodyColor.light,
           backgroundColor: darkMode.value ? tooltipBgColor.dark : tooltipBgColor.light,
           borderColor: darkMode.value ? tooltipBorderColor.dark : tooltipBorderColor.light,
         },
         legend: {
-          display: false,
+          display: true,
+          position: 'top',
+          align: 'start',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 8,
+            boxHeight: 8,
+          },
         },
       },
       interaction: {
         intersect: false,
-        mode: 'nearest',
+        mode: 'index',
+        axis: 'x',
       },
       maintainAspectRatio: false,
       resizeDelay: 200,
@@ -171,7 +190,7 @@ export default {
         options: buildOptions(),
       })
     }
-    
+
     onMounted(() => {
       renderChart()
     })

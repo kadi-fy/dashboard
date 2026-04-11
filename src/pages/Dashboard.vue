@@ -9,7 +9,11 @@
 
           <!-- 顶部标题行 -->
           <div class="mb-3 flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">公司整体经营指标</h1>
+            <SectionDividerTitle
+              title="公司整体经营指标"
+              subtitle="COMPANY OVERVIEW"
+              tone="blue"
+            />
             <div class="flex items-center gap-2">
                 <Datepicker :model-value="monthPickerValue" @update:model-value="onMonthPickedStr" />
             </div>
@@ -43,6 +47,15 @@
               :selected-year="selectedYear"
               :selected-month="selectedMonth"
             />
+
+            <div class="col-span-full mt-1">
+              <SectionDividerTitle
+                title="公司本部经营指标"
+                subtitle="HEADQUARTERS"
+                tone="emerald"
+                :compact="true"
+              />
+            </div>
             
             <BaseCard
               v-if="companyUnitOrgId"
@@ -74,13 +87,27 @@
               modal-chart-type="line"
             />
 
+            <div class="col-span-full mt-1">
+              <SectionDividerTitle
+                title="生产部门经营指标"
+                subtitle="PRODUCTION DEPARTMENTS"
+                tone="violet"
+                :compact="true"
+              />
+            </div>
+
             <DepartmentOverview
               :selected-year="selectedYear"
               :selected-month="selectedMonth"
             />
 
             <div class="col-span-full mt-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">中能智新公司</h3>
+              <SectionDividerTitle
+                title="中能智新公司"
+                subtitle="ZHONGNENG ZHIXIN"
+                tone="blue"
+                :compact="true"
+              />
               <div class="grid grid-cols-12 gap-6">
                 <BaseCard
                   metric-type="profit_total"
@@ -111,7 +138,12 @@
             </div>
 
             <div class="col-span-full mt-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">能建时代研究院</h3>
+              <SectionDividerTitle
+                title="能建时代研究院"
+                subtitle="ERA RESEARCH INSTITUTE"
+                tone="violet"
+                :compact="true"
+              />
               <div class="grid grid-cols-12 gap-6">
                 <BaseCard
                   metric-type="profit_total"
@@ -142,7 +174,12 @@
             </div>
 
             <div class="col-span-full mt-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">苏尼特公司</h3>
+              <SectionDividerTitle
+                title="苏尼特公司"
+                subtitle="SUNITE COMPANY"
+                tone="emerald"
+                :compact="true"
+              />
               <div class="grid grid-cols-12 gap-6">
                 <BaseCard
                   metric-type="profit_total"
@@ -188,6 +225,7 @@ import CompanyMetricCards from '../partials/dashboard/CompanyMetricCards.vue'
 import DepartmentOverview from '../partials/dashboard/DepartmentOverview.vue'
 import ChatBot from '../components/ChatBot.vue'
 import Datepicker from '../components/Datepicker.vue'
+import SectionDividerTitle from '../components/SectionDividerTitle.vue'
 import { GLOBAL_CONFIG, formatValue } from '../utils/Utils'
 
 const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL
@@ -204,6 +242,7 @@ export default {
     DepartmentOverview,
     ChatBot,
     Datepicker,
+    SectionDividerTitle,
   },
   setup() {
     const sidebarOpen = ref(false)
