@@ -40,10 +40,12 @@
       </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="h-[130px] overflow-hidden">
-      <CardLIneChart :current-values="currentValues" :lastyear-values="lastYearValues" :target-values="targetValues" :layout-padding="0" />
-    </div>
+    <!-- 图表区域：1月隐藏，其他月份平滑显示 -->
+    <transition name="line-chart-fade" mode="out-in">
+      <div v-if="showLineChart" class="h-[130px] overflow-hidden">
+        <CardLIneChart :current-values="currentValues" :lastyear-values="lastYearValues" :target-values="targetValues" :layout-padding="0" />
+      </div>
+    </transition>
     <CompanyRevenueModal
     v-model="showModal"
     :company-detail="companyDetail" :selected-year="selectedYear" 
@@ -131,6 +133,9 @@ export default {
     const internalCompletionRate = computed(() => {
       return Number(props.companyData?.revenue_internal_completion)*100 || 0 // 假设字段名
     })
+
+    const showLineChart = computed(() => props.selectedMonth > 1)
+
     const handleBarClick = async () => {
       try {
         const params = `year=${props.selectedYear}&month=${props.selectedMonth}`;
@@ -152,6 +157,7 @@ export default {
       annualGroupTarget,
       groupCompletionRate,
       internalCompletionRate,
+      showLineChart,
       showModal,          // ✅ 4. 必须返回给模板使用
       companyDetail,      // ✅ 4. 必须返回
       handleBarClick      // ✅ 4. 必须返回，否则 @click 无效
@@ -159,3 +165,25 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.line-chart-fade-enter-active,
+.line-chart-fade-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease;
+  overflow: hidden;
+}
+
+.line-chart-fade-enter-from,
+.line-chart-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+  max-height: 0;
+}
+
+.line-chart-fade-enter-to,
+.line-chart-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 130px;
+}
+</style>

@@ -9,7 +9,7 @@
         </header>
         <div class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{{ currentSnapshot?.org_name }}</div>
         <div class="flex items-baseline gap-1.5">
-          <div class="text-2xl font-bold text-gray-900 dark:text-white">
+          <div class="text-2xl font-bold" :class="mainValueClass">
             {{ currentSnapshot?.[config.totalField] }}
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-400">万元</div>
@@ -20,19 +20,29 @@
       <div class="flex-shrink-0">
         <div
           v-if="showValueStatusBadge"
-          class="relative flex h-[90px] w-[90px] items-center justify-center rounded-full border-[10px] bg-white dark:bg-gray-800"
-          :class="statusBadgeClass"
+          class="relative flex h-[100px] w-[100px] items-center justify-center rounded-2xl"
         >
-          <div class="absolute inset-[10px] rounded-full bg-gray-50 dark:bg-gray-900"></div>
+          <span class="pointer-events-none absolute h-18 w-18 rounded-full blur-xl opacity-45" :class="statusGlowClass"></span>
           <div
-            class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-800"
-            :class="statusAccentClass"
+            class="relative w-16 h-16 rounded-2xl border flex items-center justify-center overflow-hidden shadow-[0_14px_28px_rgba(15,23,42,0.14)]"
+            :class="statusBadgeClass"
           >
-            <span class="text-[18px] leading-none">{{ statusIcon }}</span>
+            <span class="absolute inset-[3px] rounded-[12px] metric-orb-animate" :class="statusOrbClass"></span>
+            <span class="absolute top-1 left-1 h-3 w-5 rounded-full bg-white/35 blur-[1px]"></span>
+            <svg v-if="statusTrend === 'up'" class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 1059 1024" fill="currentColor" aria-hidden="true">
+              <path d="M995.752 918.069H88.276V42.372C88.276 21.186 67.09 0 42.372 0S0 21.186 0 42.372v918.07c0 24.717 21.186 42.372 42.372 42.372h953.38c24.717 0 42.372-21.186 42.372-42.373s-17.655-42.372-42.372-42.372z"></path>
+              <path d="M275.42 716.8L512 480.22l123.586 123.587c17.655 17.655 45.904 17.655 63.559 0l278.952-278.952c17.655-17.655 17.655-45.903 0-63.558s-45.904-17.656-63.56 0L667.367 508.469 547.31 388.414c-3.53-3.531-3.53-3.531-7.062-3.531-17.655-17.655-45.903-17.655-63.558 0l-264.828 271.89c-17.655 17.655-17.655 45.903 0 63.558 17.655 14.124 45.904 14.124 63.559-3.531z"></path>
+            </svg>
+            <svg v-else-if="statusTrend === 'down'" class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true">
+              <path d="M880.512 570.154667L938.666667 512v170.666667h-170.666667l52.181333-52.181334-204.458666-204.458666-168.149334 84.053333L170.666667 278.826667 225.365333 213.333333l234.026667 195.413334 173.184-86.570667z"></path>
+              <path d="M128 853.333333h810.666667v85.333334H42.666667V128h85.333333z"></path>
+            </svg>
+            <svg v-else class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14" />
+            </svg>
           </div>
-          <div class="absolute bottom-[18px] h-1.5 w-1.5 rounded-full bg-current/50"></div>
         </div>
-        <LiquidGaugeChart 
+        <DoughnutChart 
           v-else
           :value="completionRate"
           :target-value="currentSnapshot[config.planField]"
@@ -46,15 +56,17 @@
       </div>
     </div>
 
-    <!-- 折线图：固定高度且去除内边距 -->
-    <div class="h-[120px] overflow-hidden">
-      <CardLIneChart 
-        :current-values="chartCurrentValues" 
-        :lastyear-values="chartLastYearValues" 
-        :target-values="chartTargetValues"
-        :layout-padding="0"
-      />
-    </div>
+    <!-- 折线图：1月隐藏，2月及之后平滑显示 -->
+    <transition name="line-chart-fade" mode="out-in">
+      <div v-if="showLineChart" class="h-[120px] overflow-hidden">
+        <CardLIneChart 
+          :current-values="chartCurrentValues" 
+          :lastyear-values="chartLastYearValues" 
+          :target-values="chartTargetValues"
+          :layout-padding="0"
+        />
+      </div>
+    </transition>
 
     <!-- 弹窗：直接传入完整的原始数据数组 -->
     <BaseModal
@@ -70,7 +82,7 @@
 <script>
 import { ref, computed, watch } from 'vue'
 import CardLIneChart from '../../charts/CardLIneChart.vue'
-import LiquidGaugeChart from '../../charts/LiquidGaugeChart.vue'
+import DoughnutChart from '../../charts/DoughnutChart.vue'
 import BaseModal from '../../components/BaseModal.vue'
 import { GLOBAL_CONFIG } from '../../utils/Utils'
 
@@ -81,7 +93,7 @@ export default {
   name: 'BaseCard',
   components: { 
     CardLIneChart, 
-    LiquidGaugeChart, 
+    DoughnutChart, 
     BaseModal 
   },
   props: {
@@ -300,30 +312,40 @@ export default {
       return parseFloat(snapshot?.[config.value.totalField]) || 0;
     });
 
-    const statusIcon = computed(() => {
-      if (statusValue.value > 0) return '▲';
-      if (statusValue.value < 0) return '▼';
-      return '●';
+    const statusTrend = computed(() => {
+      if (statusValue.value > 0) return 'up';
+      if (statusValue.value < 0) return 'down';
+      return 'flat';
     });
 
     const statusBadgeClass = computed(() => {
-      if (statusValue.value > 0) {
-        return 'border-emerald-200 text-emerald-600 dark:border-emerald-900/70 dark:text-emerald-400';
+      if (statusTrend.value === 'up') {
+        return 'border-emerald-200/80 dark:border-emerald-700/60 bg-emerald-50/60 dark:bg-emerald-900/20';
       }
-      if (statusValue.value < 0) {
-        return 'border-rose-200 text-rose-600 dark:border-rose-900/70 dark:text-rose-400';
+      if (statusTrend.value === 'down') {
+        return 'border-rose-200/80 dark:border-rose-700/60 bg-rose-50/60 dark:bg-rose-900/20';
       }
-      return 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-400';
+      return 'border-slate-200/80 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-900/25';
     });
 
-    const statusAccentClass = computed(() => {
-      if (statusValue.value > 0) {
-        return 'text-emerald-600 dark:text-emerald-400';
-      }
-      if (statusValue.value < 0) {
+    const statusOrbClass = computed(() => {
+      if (statusTrend.value === 'up') return 'bg-gradient-to-br from-emerald-500 to-teal-500';
+      if (statusTrend.value === 'down') return 'bg-gradient-to-br from-rose-500 to-orange-500';
+      return 'bg-gradient-to-br from-slate-500 to-slate-400';
+    });
+
+    const statusGlowClass = computed(() => {
+      if (statusTrend.value === 'up') return 'bg-emerald-400/60 dark:bg-emerald-500/40';
+      if (statusTrend.value === 'down') return 'bg-rose-400/60 dark:bg-rose-500/40';
+      return 'bg-slate-300/70 dark:bg-slate-500/35';
+    });
+
+    const mainValueClass = computed(() => {
+      const shouldWarnNegative = ['earning', 'cash'].includes(props.metricType) && statusValue.value < 0;
+      if (shouldWarnNegative) {
         return 'text-rose-600 dark:text-rose-400';
       }
-      return 'text-slate-500 dark:text-slate-300';
+      return 'text-gray-900 dark:text-white';
     });
 
     // 2. 圆环图数据 - 计算完成率
@@ -374,6 +396,8 @@ export default {
       });
     });
 
+    const showLineChart = computed(() => props.selectedMonth > 1);
+
     const handleBarClick = () => {
       showModal.value = true;
     };
@@ -385,9 +409,12 @@ export default {
       fullLastYearData,
       completionRate,
       showValueStatusBadge,
-      statusIcon,
+      statusTrend,
       statusBadgeClass,
-      statusAccentClass,
+      statusOrbClass,
+      statusGlowClass,
+      mainValueClass,
+      showLineChart,
       chartCurrentValues,
       chartLastYearValues,
       chartTargetValues,
@@ -402,5 +429,37 @@ export default {
 </script>
 
 <style scoped>
-/* 样式优化 */
+.metric-orb-animate {
+  animation: base-card-orb-float 3.2s ease-in-out infinite;
+}
+
+@keyframes base-card-orb-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+.line-chart-fade-enter-active,
+.line-chart-fade-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease;
+  overflow: hidden;
+}
+
+.line-chart-fade-enter-from,
+.line-chart-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+  max-height: 0;
+}
+
+.line-chart-fade-enter-to,
+.line-chart-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 120px;
+}
 </style>

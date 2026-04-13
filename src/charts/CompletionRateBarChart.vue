@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 import {
@@ -98,18 +98,26 @@ const isEmptyData = computed(() => {
   return !hasValidData
 })
 
+const destroyChart = () => {
+  if (chart) {
+    chart.destroy()
+    chart = null
+  }
+}
+
 // 创建或更新图表的函数
 const createOrUpdateChart = () => {
-  if (!canvas.value) return
+  const canvasEl = canvas.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
+  }
   
   const ctx = canvas.value.getContext('2d')
   const dataToUse = chartData.value
   
   if (!dataToUse || isEmptyData.value) {
-    if (chart) {
-      chart.destroy()
-      chart = null
-    }
+    destroyChart()
     return
   }
   
@@ -219,12 +227,7 @@ onMounted(() => {
   createOrUpdateChart()
 })
 
-onUnmounted(() => {
-  if (chart) {
-    chart.destroy()
-    chart = null
-  }
-})
+onBeforeUnmount(() => destroyChart())
 
 // 监听数据变化
 watch(
@@ -240,6 +243,10 @@ watch(
   () => props.options,
   () => {
     if (chart && !isEmptyData.value) {
+      if (!canvas.value || !canvas.value.isConnected) {
+        destroyChart()
+        return
+      }
       const baseOptions = {
         layout: {
           padding: {

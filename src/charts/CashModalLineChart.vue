@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Chart,
   LineController,
@@ -28,17 +28,25 @@ const props = defineProps({
 const canvasRef = ref(null)
 let chart = null
 
-const renderChart = () => {
-  if (!canvasRef.value) return
-
+const destroyChart = () => {
   if (chart) {
     chart.destroy()
     chart = null
   }
+}
+
+const renderChart = () => {
+  const canvasEl = canvasRef.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
+  }
+
+  destroyChart()
 
   const labels = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 
-  chart = new Chart(canvasRef.value, {
+  chart = new Chart(canvasEl, {
     type: 'line',
     data: {
       labels,
@@ -141,7 +149,5 @@ watch(
 )
 
 onMounted(() => renderChart())
-onUnmounted(() => {
-  if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>

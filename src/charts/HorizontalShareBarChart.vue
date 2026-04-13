@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 
@@ -26,13 +26,19 @@ import { getCssVariable } from '../utils/Utils'
 Chart.register(BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend)
 
 export default {
-  name: 'BarChart03',
+  name: 'HorizontalShareBarChart',
   props: ['data', 'width', 'height'],
   setup(props) {
 
     const canvas = ref(null)
     const legend = ref(null)
     let chart = null
+    const destroyChart = () => {
+      if (chart) {
+        chart.destroy()
+        chart = null
+      }
+    }
     const darkMode = useDark()
     const { tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
     
@@ -44,6 +50,7 @@ export default {
       const max = values.reduce(reducer)    
 
       const ctx = canvas.value
+      if (!ctx || !ctx.isConnected) return
       chart = new Chart(ctx, {
         type: 'bar',
         data: props.data,
@@ -140,11 +147,16 @@ export default {
       })
     })
 
-    onUnmounted(() => chart.destroy())
+    onBeforeUnmount(() => destroyChart())
 
     watch(
       () => darkMode.value,
       () => {
+        if (!chart) return
+        if (!canvas.value || !canvas.value.isConnected) {
+          destroyChart()
+          return
+        }
         if (darkMode.value) {
           chart.options.plugins.tooltip.bodyColor = tooltipBodyColor.dark
           chart.options.plugins.tooltip.backgroundColor = tooltipBgColor.dark

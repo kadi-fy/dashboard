@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, computed, nextTick } from 'vue'
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -67,6 +67,13 @@ const emit = defineEmits(['update:modelValue'])
 // Refs
 const chartCanvas = ref(null)
 let chartInstance = null
+
+const destroyChart = () => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+}
 
 // === 响应式计算数据 ===
 const currentYearData = computed(() =>
@@ -210,13 +217,19 @@ const valueAndPercentagePlugin = {
 
 // === 初始化图表 ===
 const initChart = () => {
-  if (!chartCanvas.value || currentYearData.value.length === 0) return
-
-  const ctx = chartCanvas.value.getContext('2d')
-
-  if (chartInstance) {
-    chartInstance.destroy()
+  const canvasEl = chartCanvas.value
+  if (!canvasEl || !canvasEl.isConnected || currentYearData.value.length === 0) {
+    destroyChart()
+    return
   }
+
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) {
+    destroyChart()
+    return
+  }
+
+  destroyChart()
 
   chartInstance = new Chart(ctx, {
     type: 'bar',
@@ -314,21 +327,33 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => props.modelValue,
+  async (open) => {
+    if (open) {
+      await nextTick()
+      if (chartCanvas.value && chartCanvas.value.isConnected && props.departmentDetail.length > 0) {
+        initChart()
+      }
+      return
+    }
+    destroyChart()
+  },
+)
+
 // 同时监听数据变化，重新绘图
 watch(
   () => [props.departmentDetail, props.selectedYear],
   () => {
-    if (chartCanvas.value) {
+    if (chartCanvas.value && chartCanvas.value.isConnected) {
       initChart()
+    } else {
+      destroyChart()
     }
   }
 )
 
-onUnmounted(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 <style scoped>
 /* 

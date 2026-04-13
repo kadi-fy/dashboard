@@ -1,25 +1,26 @@
 <template>
 	<section class="col-span-full xl:col-span-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
-		<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+		<header class="relative overflow-hidden px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-500/20 flex items-center justify-between bg-gradient-to-r from-emerald-50 via-teal-50 to-lime-50 dark:from-slate-900/85 dark:via-emerald-950/25 dark:to-teal-950/25">
+			<div class="pointer-events-none absolute -left-10 top-1/2 h-16 w-28 -translate-y-1/2 rounded-full bg-emerald-300/20 blur-2xl dark:bg-emerald-400/15"></div>
+			<div class="pointer-events-none absolute right-4 top-1 h-20 w-20 rounded-full bg-teal-300/25 blur-2xl dark:bg-teal-400/15"></div>
+			<div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-400/75 to-transparent dark:via-emerald-300/60"></div>
 			<div class="flex items-center gap-2">
-				<div class="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+				<div class="h-8 w-8 rounded-lg bg-emerald-100/90 text-emerald-600 flex items-center justify-center ring-1 ring-emerald-300/50 dark:ring-emerald-400/30 shadow-[0_0_18px_rgba(16,185,129,0.24)] dark:shadow-[0_0_22px_rgba(52,211,153,0.18)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M3 3v18h18" />
 						<path d="m19 9-5 5-4-4-3 3" />
 					</svg>
 				</div>
 				<div>
-					<h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">部门利润</h3>
-					<p class="text-[10px] tracking-wider text-emerald-500">DEPARTMENT PROFIT</p>
+					<h3 class="text-lg font-extrabold tracking-[0.03em] text-slate-800 dark:text-slate-100">部门利润</h3>
+					<p class="text-[10px] tracking-[0.2em] uppercase text-emerald-500 dark:text-emerald-300">DEPARTMENT PROFIT</p>
 				</div>
 			</div>
-			<div class="text-xs text-gray-500 flex items-center gap-3">
+			<div class="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-3 bg-white/60 dark:bg-slate-900/45 rounded-full px-3 py-1 ring-1 ring-emerald-200/70 dark:ring-emerald-500/25 backdrop-blur-sm">
 				<span class="flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></i>盈利</span>
 				<span class="flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded-full bg-rose-400"></i>亏损</span>
 			</div>
 		</header>
-
-		<div class="h-[2px] bg-emerald-400"></div>
 
 		<div class="p-3 h-[300px] relative bg-white dark:bg-gray-800">
 			<canvas ref="canvasRef"></canvas>
@@ -29,7 +30,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
 	Chart,
 	BarController,
@@ -50,6 +51,13 @@ const emit = defineEmits(['bar-click'])
 
 const canvasRef = ref(null)
 let chart = null
+
+const destroyChart = () => {
+	if (chart) {
+		chart.destroy()
+		chart = null
+	}
+}
 
 const toNum = (v) => {
 	const n = parseFloat(v)
@@ -85,7 +93,7 @@ const valuePlugin = {
 			const valueText = `${Math.round(value)}`
 			const unitText = '万元'
 			const barHeight = Math.abs(bar.base - bar.y)
-			const showOutside = barHeight < 40
+			const showOutside = barHeight < 30
 
 			if (showOutside) {
 				const isPositive = value >= 0
@@ -120,17 +128,18 @@ const valuePlugin = {
 }
 
 const renderChart = () => {
-	if (!canvasRef.value) return
-	if (chart) {
-		chart.destroy()
-		chart = null
+	const canvasEl = canvasRef.value
+	if (!canvasEl || !canvasEl.isConnected) {
+		destroyChart()
+		return
 	}
+	destroyChart()
 	if (isEmpty.value) return
 
 	const labels = props.rows.map((r) => r.org_name)
 	const profits = props.rows.map((r) => toNum(r.department_profit))
 
-	const ctx = canvasRef.value.getContext('2d')
+	const ctx = canvasEl.getContext('2d')
 	if (!ctx) return
 
 	chart = new Chart(ctx, {
@@ -189,7 +198,5 @@ const renderChart = () => {
 watch(() => props.rows, () => renderChart(), { deep: true })
 
 onMounted(() => renderChart())
-onUnmounted(() => {
-	if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>

@@ -17,7 +17,7 @@
 
       <!-- 圆环图：使用当前月的完成率 -->
       <div class="flex space-x-2 ml-4">
-        <LiquidGaugeChart 
+        <DoughnutChart 
           :value="completionRate"
           :target-value="currentSnapshot.charge_plan"
           :target="100"
@@ -51,8 +51,7 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import CardLIneChart from '../../charts/CardLIneChart.vue'
-import DoughnutChart from '../../charts/DoughnutChart01.vue'
-import LiquidGaugeChart from '../../charts/LiquidGaugeChart.vue'
+import DoughnutChart from '../../charts/DoughnutChart.vue'
 import BaseChargeModal from '../../components/BaseChargeModal.vue' 
 
 import { GLOBAL_CONFIG } from '../../utils/Utils'
@@ -62,7 +61,7 @@ const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 6
 
 export default {
   name: 'CompanyTotalProfit',
-  components: { CardLIneChart, DoughnutChart, BaseChargeModal, LiquidGaugeChart },
+  components: { CardLIneChart, DoughnutChart, BaseChargeModal },
   props: {
     // 不再需要外部传入复杂的数组，只需要标识符
     orgId: { type: [Number, String], required: true }, 

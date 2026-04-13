@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, computed, nextTick } from 'vue'
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js'
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -71,6 +71,13 @@ const emit = defineEmits(['update:modelValue'])
 // Refs
 const chartCanvas = ref(null)
 let chartInstance = null
+
+const destroyChart = () => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+}
 
 // === 2. 修改计算属性: 直接使用传入的数组，不再进行 filter 过滤 ===
 
@@ -202,13 +209,19 @@ const valueAndPercentagePlugin = {
 
 // === 初始化图表 (保持不变) ===
 const initChart = () => {
-  if (!chartCanvas.value || props.currentYearData.length === 0) return
-
-  const ctx = chartCanvas.value.getContext('2d')
-
-  if (chartInstance) {
-    chartInstance.destroy()
+  const canvasEl = chartCanvas.value
+  if (!canvasEl || !canvasEl.isConnected || props.currentYearData.length === 0) {
+    destroyChart()
+    return
   }
+
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) {
+    destroyChart()
+    return
+  }
+
+  destroyChart()
 
   chartInstance = new Chart(ctx, {
     type: 'bar',
@@ -301,21 +314,33 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => props.modelValue,
+  async (open) => {
+    if (open) {
+      await nextTick()
+      if (chartCanvas.value && chartCanvas.value.isConnected && props.currentYearData.length > 0) {
+        initChart()
+      }
+      return
+    }
+    destroyChart()
+  },
+)
+
 // 监听数据变化，重新绘图
 watch(
   () => [props.currentYearData, props.lastYearData, props.selectedYear],
   () => {
-    if (chartCanvas.value) {
+    if (chartCanvas.value && chartCanvas.value.isConnected) {
       initChart()
+    } else {
+      destroyChart()
     }
   }
 )
 
-onUnmounted(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 <style scoped>
 /* 

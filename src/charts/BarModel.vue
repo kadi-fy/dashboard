@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Chart,
   BarController,
@@ -39,6 +39,13 @@ const props = defineProps({
 
 const canvasRef = ref(null)
 let chart = null
+
+const destroyChart = () => {
+  if (chart) {
+    chart.destroy()
+    chart = null
+  }
+}
 
 const labels = computed(() => props.dataConfig.months || [])
 
@@ -206,13 +213,18 @@ const buildDatasets = () => {
 }
 
 const renderChart = () => {
-  if (!canvasRef.value) return
-  const ctx = canvasRef.value.getContext('2d')
-
-  if (chart) {
-    chart.destroy()
-    chart = null
+  const canvasEl = canvasRef.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
   }
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) {
+    destroyChart()
+    return
+  }
+
+  destroyChart()
 
   chart = new Chart(ctx, {
     data: {
@@ -251,9 +263,7 @@ watch(
 )
 
 onMounted(() => renderChart())
-onUnmounted(() => {
-  if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 
 <style scoped>

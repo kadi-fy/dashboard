@@ -120,7 +120,10 @@ const chartConfig = {
   showLastYear: true,
   targetLabel: '年度目标(新签合同)',
   actualLabel: '实际完成(新签合同)',
-  lastYearLabel: '上一年同期完成(新签合同)'
+  lastYearLabel: '上一年同期完成(新签合同)',
+  showBarAnnotations: true,
+  showYoYGrowth: true,
+  useDepartmentBarStyle: true,
 }
 
 // === 工具函数 ===

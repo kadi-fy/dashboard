@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 
@@ -39,11 +39,18 @@ export default {
     const canvas = ref(null)
     const legend = ref(null)
     let chart = null
+    const destroyChart = () => {
+      if (chart) {
+        chart.destroy()
+        chart = null
+      }
+    }
     const darkMode = useDark()
     const { textColor, gridColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
     
     onMounted(() => {
       const ctx = canvas.value
+      if (!ctx || !ctx.isConnected) return
       chart = new Chart(ctx, {
         type: 'line',
         data: props.data,
@@ -158,11 +165,16 @@ export default {
       })
     })
 
-    onUnmounted(() => chart.destroy())
+    onBeforeUnmount(() => destroyChart())
 
     watch(
       () => darkMode.value,
       () => {
+        if (!chart) return
+        if (!canvas.value || !canvas.value.isConnected) {
+          destroyChart()
+          return
+        }
         if (darkMode.value) {
           chart.options.scales.x.ticks.color = textColor.dark
           chart.options.scales.y.ticks.color = textColor.dark

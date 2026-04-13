@@ -1,22 +1,23 @@
 <template>
   <section class="col-span-full xl:col-span-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
-    <header class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+    <header class="relative overflow-hidden px-4 py-3 border-b flex items-center justify-between" :class="headerTheme.headerClass">
+      <div class="pointer-events-none absolute -left-10 -top-8 h-24 w-24 rounded-full blur-2xl" :class="headerTheme.glowLeftClass"></div>
+      <div class="pointer-events-none absolute right-4 -bottom-10 h-20 w-20 rounded-full blur-2xl" :class="headerTheme.glowRightClass"></div>
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent to-transparent" :class="headerTheme.energyLineClass"></div>
       <div class="flex items-center gap-2">
-        <div class="h-8 w-8 rounded-lg flex items-center justify-center" :class="iconClass">
+        <div class="h-8 w-8 rounded-lg flex items-center justify-center ring-1" :class="[iconClass, headerTheme.iconFrameClass]">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 3v18h18" />
             <path d="m19 9-5 5-4-4-3 3" />
           </svg>
         </div>
         <div>
-          <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ title }}</h3>
-          <p class="text-[10px] tracking-wider" :class="subtitleClass">{{ subtitle }}</p>
+          <h3 class="text-lg font-extrabold tracking-[0.03em] text-slate-800 dark:text-slate-100">{{ title }}</h3>
+          <p class="text-[10px] tracking-[0.2em] uppercase" :class="subtitleClass">{{ subtitle }}</p>
         </div>
       </div>
-      <div class="text-xs text-gray-500">点击折线点查看趋势</div>
+      <div class="text-xs text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 ring-1 backdrop-blur-sm" :class="headerTheme.hintPillClass">点击折线点查看趋势</div>
     </header>
-
-    <div class="h-[2px]" :class="accentClass"></div>
 
     <div class="p-3 h-[300px] relative bg-white dark:bg-gray-800">
       <canvas ref="canvasRef"></canvas>
@@ -26,7 +27,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Chart,
   LineController,
@@ -62,6 +63,13 @@ const emit = defineEmits(['point-click'])
 const canvasRef = ref(null)
 let chart = null
 
+const destroyChart = () => {
+  if (chart) {
+    chart.destroy()
+    chart = null
+  }
+}
+
 const toNum = (v) => {
   const n = parseFloat(v)
   return Number.isFinite(n) ? n : 0
@@ -74,12 +82,52 @@ const formatMetricValue = (value) => {
 
 const isEmpty = computed(() => !props.rows || props.rows.length === 0)
 
-const renderChart = () => {
-  if (!canvasRef.value) return
-  if (chart) {
-    chart.destroy()
-    chart = null
+const headerTheme = computed(() => {
+  const themes = {
+    'line-charge-per': {
+      headerClass: 'border-cyan-100/80 dark:border-cyan-500/20 bg-gradient-to-r from-slate-50 via-cyan-50/65 to-sky-50/75 dark:from-slate-900/85 dark:via-cyan-950/25 dark:to-slate-900/70',
+      glowLeftClass: 'bg-cyan-300/20 dark:bg-cyan-400/15',
+      glowRightClass: 'bg-sky-300/20 dark:bg-sky-400/15',
+      energyLineClass: 'via-cyan-400/70 dark:via-cyan-300/60',
+      iconFrameClass: 'ring-cyan-300/35 dark:ring-cyan-400/25 shadow-[0_0_14px_rgba(34,211,238,0.2)] dark:shadow-[0_0_18px_rgba(56,189,248,0.14)]',
+      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-cyan-200/70 dark:ring-cyan-500/20',
+    },
+    'line-cost-per': {
+      headerClass: 'border-amber-100/80 dark:border-amber-500/20 bg-gradient-to-r from-slate-50 via-amber-50/70 to-orange-50/75 dark:from-slate-900/85 dark:via-amber-950/25 dark:to-slate-900/70',
+      glowLeftClass: 'bg-amber-300/20 dark:bg-amber-400/15',
+      glowRightClass: 'bg-orange-300/20 dark:bg-orange-400/15',
+      energyLineClass: 'via-amber-400/70 dark:via-amber-300/60',
+      iconFrameClass: 'ring-amber-300/35 dark:ring-amber-400/25 shadow-[0_0_14px_rgba(251,191,36,0.2)] dark:shadow-[0_0_18px_rgba(245,158,11,0.14)]',
+      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-amber-200/70 dark:ring-amber-500/20',
+    },
+    'line-profit-per': {
+      headerClass: 'border-emerald-100/80 dark:border-emerald-500/20 bg-gradient-to-r from-slate-50 via-emerald-50/70 to-teal-50/75 dark:from-slate-900/85 dark:via-emerald-950/25 dark:to-slate-900/70',
+      glowLeftClass: 'bg-emerald-300/20 dark:bg-emerald-400/15',
+      glowRightClass: 'bg-teal-300/20 dark:bg-teal-400/15',
+      energyLineClass: 'via-emerald-400/70 dark:via-emerald-300/60',
+      iconFrameClass: 'ring-emerald-300/35 dark:ring-emerald-400/25 shadow-[0_0_14px_rgba(52,211,153,0.2)] dark:shadow-[0_0_18px_rgba(16,185,129,0.14)]',
+      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-emerald-200/70 dark:ring-emerald-500/20',
+    },
+    'line-headcount': {
+      headerClass: 'border-indigo-100/80 dark:border-indigo-500/20 bg-gradient-to-r from-slate-50 via-indigo-50/70 to-blue-50/75 dark:from-slate-900/85 dark:via-indigo-950/25 dark:to-slate-900/70',
+      glowLeftClass: 'bg-indigo-300/20 dark:bg-indigo-400/15',
+      glowRightClass: 'bg-blue-300/20 dark:bg-blue-400/15',
+      energyLineClass: 'via-indigo-400/70 dark:via-indigo-300/60',
+      iconFrameClass: 'ring-indigo-300/35 dark:ring-indigo-400/25 shadow-[0_0_14px_rgba(129,140,248,0.2)] dark:shadow-[0_0_18px_rgba(99,102,241,0.14)]',
+      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-indigo-200/70 dark:ring-indigo-500/20',
+    },
   }
+
+  return themes[props.metricType] || themes['line-charge-per']
+})
+
+const renderChart = () => {
+  const canvasEl = canvasRef.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
+  }
+  destroyChart()
   if (isEmpty.value) return
 
   const labels = props.rows.map((r) => r.org_name)
@@ -88,7 +136,7 @@ const renderChart = () => {
     ? props.rows.map((r) => toNum(r[props.secondaryMetricKey]))
     : []
 
-  const ctx = canvasRef.value.getContext('2d')
+  const ctx = canvasEl.getContext('2d')
   if (!ctx) return
 
   chart = new Chart(ctx, {
@@ -185,7 +233,5 @@ const renderChart = () => {
 watch(() => [props.rows, props.metricKey], () => renderChart(), { deep: true })
 
 onMounted(() => renderChart())
-onUnmounted(() => {
-  if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>

@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 import {
@@ -38,6 +38,13 @@ const emit = defineEmits(['barClick'])
 const canvas = ref(null)
 const legend = ref(null)
 let chart = null
+const destroyChart = () => {
+  if (chart) {
+    chart.destroy();
+    chart = null;
+  }
+}
+
 const darkMode = useDark()
 const { textColor, gridColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
 
@@ -65,6 +72,7 @@ const customTooltip = {
 }
 
 onMounted(() => {
+  if (!canvas.value || !canvas.value.isConnected) return
   const ctx = canvas.value.getContext('2d')
   
   const baseOptions = {
@@ -156,18 +164,19 @@ onMounted(() => {
   });
 });
 
-onUnmounted(() => {
-  if (chart) {
-    chart.destroy();
-    chart = null;
-  }
-});
+onBeforeUnmount(() => {
+  destroyChart()
+})
 
 // ✅ 监听数据变化，安全更新图表
 watch(
   () => props.data,
   (newData) => {
     if (chart && newData) {
+      if (!canvas.value || !canvas.value.isConnected) {
+        destroyChart()
+        return
+      }
       // ✅ 不直接赋值，而是更新数据集
       const newDatasets = newData.datasets.map(dataset => ({
         ...dataset,
@@ -187,6 +196,10 @@ watch(
   () => darkMode.value,
   () => {
     if (chart) {
+      if (!canvas.value || !canvas.value.isConnected) {
+        destroyChart()
+        return
+      }
       // 更新颜色配置
       chart.options.scales.y.grid.color = darkMode.value ? gridColor.dark : gridColor.light
       chart.update()

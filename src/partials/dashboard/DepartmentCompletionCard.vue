@@ -1,8 +1,11 @@
 <template>
 	<section class="col-span-full xl:col-span-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
-		<header class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+		<header class="relative overflow-hidden px-4 py-3  flex items-center justify-between bg-gradient-to-r from-slate-50 via-cyan-50/70 to-blue-50/80 dark:from-slate-900/80 dark:via-cyan-950/30 dark:to-slate-900/70">
+			<div class="pointer-events-none absolute -left-10 -top-8 h-24 w-24 rounded-full bg-cyan-300/20 blur-2xl dark:bg-cyan-400/15"></div>
+			<div class="pointer-events-none absolute right-6 -bottom-10 h-20 w-20 rounded-full bg-blue-400/20 blur-2xl dark:bg-blue-500/15"></div>
+			<div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent dark:via-cyan-300/60"></div>
 			<div class="flex items-center gap-2">
-				<div :class="iconClass" class="h-8 w-8 rounded-lg flex items-center justify-center">
+				<div :class="iconClass" class="relative h-8 w-8 rounded-lg flex items-center justify-center ring-1 ring-cyan-300/40 dark:ring-cyan-400/30 shadow-[0_0_16px_rgba(34,211,238,0.25)] dark:shadow-[0_0_20px_rgba(56,189,248,0.18)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path v-if="metricType === 'charge'" d="M4 20V10" />
 						<path v-if="metricType === 'charge'" d="M10 20V4" />
@@ -14,19 +17,25 @@
 						<path v-if="metricType === 'contract'" d="M8 17h5" />
 					</svg>
 				</div>
-				<div>
-					<h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ title }}</h3>
-					<p class="text-[10px] tracking-wider" :class="subtitleClass">{{ subtitle }}</p>
+				<div class="relative">
+					<h3 class="text-lg font-extrabold tracking-[0.03em] text-slate-800 dark:text-slate-100">{{ title }}</h3>
+					<p class="text-[10px] tracking-[0.2em] uppercase" :class="subtitleClass">{{ subtitle }}</p>
 				</div>
 			</div>
-			<div class="text-xs text-gray-500 flex items-center gap-3">
+			<div class="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-3 bg-white/55 dark:bg-slate-900/45 rounded-full px-3 py-1 ring-1 ring-cyan-200/70 dark:ring-cyan-500/20 backdrop-blur-sm">
 				<span class="flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></i>达标</span>
 				<span class="flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded-full bg-amber-400"></i>预警</span>
 				<span class="flex items-center gap-1"><i class="inline-block h-2.5 w-2.5 rounded-full bg-rose-400"></i>未达标</span>
 			</div>
 		</header>
 
-		<div class="h-[2px]" :class="metricType === 'charge' ? 'bg-blue-500' : 'bg-violet-500'"></div>
+		<div class="h-[2px] w-full bg-slate-200/80 dark:bg-slate-700/70 overflow-hidden">
+			<div
+				class="h-full transition-all duration-500 ease-out"
+				:class="metricType === 'charge' ? 'bg-blue-500' : 'bg-violet-500'"
+				:style="completionBarStyle"
+			></div>
+		</div>
 
 		<div class="p-3 h-[300px] relative bg-white dark:bg-gray-800">
 			<canvas ref="canvasRef"></canvas>
@@ -36,7 +45,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
 	Chart,
 	BarController,
@@ -78,12 +87,35 @@ const emit = defineEmits(['bar-click'])
 const canvasRef = ref(null)
 let chart = null
 
+const destroyChart = () => {
+	if (chart) {
+		chart.destroy()
+		chart = null
+	}
+}
+
 const toNum = (v) => {
 	const n = parseFloat(v)
 	return Number.isFinite(n) ? n : 0
 }
 
 const isEmpty = computed(() => !props.rows || props.rows.length === 0)
+
+const overallCompletionRate = computed(() => {
+	const list = Array.isArray(props.rows) ? props.rows : []
+	if (!list.length) return 0
+
+	const totalActual = list.reduce((sum, row) => sum + toNum(row?.[props.actualKey]), 0)
+	const totalPlan = list.reduce((sum, row) => sum + toNum(row?.[props.planKey]), 0)
+	if (totalPlan <= 0) return 0
+
+	return (totalActual / totalPlan) * 100
+})
+
+const completionBarStyle = computed(() => {
+	const bounded = Math.min(Math.max(overallCompletionRate.value, 0), 100)
+	return { width: `${bounded}%` }
+})
 
 const iconClass = computed(() => {
 	if (props.metricType === 'charge') return 'bg-blue-100 text-blue-600'
@@ -169,11 +201,12 @@ const completionLabelPlugin = {
 }
 
 const renderChart = () => {
-	if (!canvasRef.value) return
-	if (chart) {
-		chart.destroy()
-		chart = null
+	const canvasEl = canvasRef.value
+	if (!canvasEl || !canvasEl.isConnected) {
+		destroyChart()
+		return
 	}
+	destroyChart()
 	if (isEmpty.value) return
 
 	const rows = props.rows
@@ -192,7 +225,7 @@ const renderChart = () => {
 	const yMax = Math.ceil((maxRate * 1.08) / 10) * 10
 	const yStep = 10
 
-	const ctx = canvasRef.value.getContext('2d')
+	const ctx = canvasEl.getContext('2d')
 	if (!ctx) return
 
 	chart = new Chart(ctx, {
@@ -263,7 +296,5 @@ watch(
 )
 
 onMounted(() => renderChart())
-onUnmounted(() => {
-	if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>

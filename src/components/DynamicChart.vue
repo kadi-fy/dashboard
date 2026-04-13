@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Chart,
   LineController,
@@ -41,6 +41,13 @@ const props = defineProps({
 
 const canvasRef = ref(null)
 let chart = null
+
+const destroyChart = () => {
+  if (chart) {
+    chart.destroy()
+    chart = null
+  }
+}
 
 const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6']
 
@@ -82,18 +89,26 @@ const normalize = (cfg) => {
 }
 
 const renderChart = () => {
-  if (!canvasRef.value || !props.chartConfig) return
+  if (!props.chartConfig) {
+    destroyChart()
+    return
+  }
+  const canvasEl = canvasRef.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
+  }
   const data = normalize(props.chartConfig)
   if (!data) return
 
   const type = data.type === 'area' ? 'line' : data.type
 
-  if (chart) {
-    chart.destroy()
-    chart = null
-  }
+  destroyChart()
 
-  chart = new Chart(canvasRef.value.getContext('2d'), {
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) return
+
+  chart = new Chart(ctx, {
     type,
     data: {
       labels: data.labels,
@@ -111,9 +126,7 @@ const renderChart = () => {
 
 watch(() => props.chartConfig, () => renderChart(), { deep: true })
 onMounted(() => renderChart())
-onUnmounted(() => {
-  if (chart) chart.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 
 <style scoped>

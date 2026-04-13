@@ -1,6 +1,29 @@
 <template>
   <div class="flex h-screen overflow-hidden">
 
+    <transition name="boot-fade">
+      <div v-if="bootLoading" class="fixed inset-0 z-[120] overflow-hidden">
+        <div class="absolute inset-0 boot-bg"></div>
+        <div class="absolute inset-0 boot-grid"></div>
+        <div class="relative h-full w-full flex items-center justify-center p-6">
+          <div class="w-full max-w-md rounded-3xl border border-white/30 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_30px_70px_rgba(15,23,42,0.35)] px-7 py-8">
+            <div class="text-xs tracking-[0.22em] font-semibold text-slate-500 dark:text-slate-300 mb-2">DASHBOARD INIT</div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">正在初始化经营看板</div>
+            <div class="text-sm text-slate-500 dark:text-slate-400 mb-5">{{ bootStatusText }}</div>
+
+            <div class="relative h-3 rounded-full bg-slate-200/80 dark:bg-slate-700/70 overflow-hidden">
+              <div class="absolute inset-y-0 left-0 rounded-full boot-progress" :style="{ width: `${bootProgress}%` }"></div>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between text-sm">
+              <span class="text-slate-500 dark:text-slate-400">加载进度</span>
+              <span class="font-semibold text-slate-700 dark:text-slate-200">{{ bootProgress }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
       <Header :sidebarOpen="sidebarOpen" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
@@ -215,7 +238,7 @@
 </template>
 
 <script>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import Header from '../partials/Header.vue'
 import BaseCard from '../partials/dashboard/BaseCard.vue'
 import CompanyRevenue from '../partials/dashboard/CompanyRevenue.vue'
@@ -257,6 +280,15 @@ export default {
     const companyUnitOrgId = ref(null)
     const isLoading = ref(false)
     const loadError = ref('')
+    const bootLoading = ref(true)
+    const bootProgress = ref(0)
+    const bootStatusText = ref('准备初始化...')
+    const hasBooted = ref(false)
+
+    const setBootProgress = (progress, status) => {
+      bootProgress.value = Math.min(100, Math.max(0, progress))
+      if (status) bootStatusText.value = status
+    }
 
     const monthPickerValue = computed(() => {
       const y = String(selectedYear.value)
@@ -373,23 +405,50 @@ export default {
     }
 
     watch([selectedYear, selectedMonth], () => {
+      if (!hasBooted.value) return
       reload().catch((err) => {
         console.error('dashboard reload failed:', err)
       })
     })
 
+    const waitFrame = () => new Promise((resolve) => {
+      requestAnimationFrame(() => resolve())
+    })
+
+    const finishBootWhenRendered = async () => {
+      setBootProgress(86, '正在渲染图表与卡片...')
+      await nextTick()
+      await waitFrame()
+      await waitFrame()
+      setBootProgress(96, '正在完成视觉初始化...')
+      await new Promise((resolve) => setTimeout(resolve, 260))
+      setBootProgress(100, '加载完成')
+      await new Promise((resolve) => setTimeout(resolve, 180))
+      bootLoading.value = false
+    }
+
     onMounted(async () => {
+      setBootProgress(8, '正在连接数据源...')
       try {
         await loadLatestAvailableMonth()
+        setBootProgress(26, '已获取最新日期')
       } catch (err) {
         console.error('load latest month failed:', err)
       }
+
+      setBootProgress(36, '正在识别公司本部...')
       try {
         await loadCompanyUnitOrgId()
+        setBootProgress(52, '组织信息已就绪')
       } catch (err) {
         console.error('load company org failed:', err)
       }
+
+      setBootProgress(64, '正在加载经营数据...')
       await reload()
+
+      await finishBootWhenRendered()
+      hasBooted.value = true
     })
 
     return {
@@ -404,9 +463,50 @@ export default {
       companyUnitOrgId,
       isLoading,
       loadError,
+      bootLoading,
+      bootProgress,
+      bootStatusText,
       onMonthPickedStr,
       formatValue,
     }
   }
 }
 </script>
+
+<style scoped>
+.boot-bg {
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(14, 165, 233, 0.22), transparent 60%),
+    radial-gradient(1000px 650px at 110% 10%, rgba(16, 185, 129, 0.2), transparent 62%),
+    linear-gradient(145deg, #eaf2ff 0%, #f5fbff 44%, #eefaf3 100%);
+}
+
+:global(.dark) .boot-bg {
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(14, 165, 233, 0.2), transparent 60%),
+    radial-gradient(1000px 650px at 110% 10%, rgba(52, 211, 153, 0.17), transparent 62%),
+    linear-gradient(145deg, #0b1220 0%, #10192e 45%, #0d1b1a 100%);
+}
+
+.boot-grid {
+  background-image: linear-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 100%);
+}
+
+.boot-progress {
+  background: linear-gradient(90deg, #06b6d4 0%, #38bdf8 45%, #34d399 100%);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+  transition: width 260ms ease;
+}
+
+.boot-fade-enter-active,
+.boot-fade-leave-active {
+  transition: opacity 280ms ease;
+}
+
+.boot-fade-enter-from,
+.boot-fade-leave-to {
+  opacity: 0;
+}
+</style>

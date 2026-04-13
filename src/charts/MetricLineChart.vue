@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useDark } from '@vueuse/core'
 import {
   Chart, LineController, LineElement, Filler, PointElement, LinearScale, CategoryScale, Tooltip,
@@ -39,6 +39,13 @@ export default {
     const canvas = ref(null)
     let chart = null
     const darkMode = useDark()
+
+    const destroyChart = () => {
+      if (chart) {
+        chart.destroy()
+        chart = null
+      }
+    }
 
     const chartData = computed(() => {
       const len = Math.max(props.currentValues.length, props.lastyearValues.length)
@@ -142,12 +149,17 @@ export default {
     }))
 
     const renderChart = () => {
-      if (!canvas.value || !chartData.value) return
-      if (chart) {
-        chart.destroy()
-        chart = null
+      if (!chartData.value) {
+        destroyChart()
+        return
       }
-      chart = new Chart(canvas.value, {
+      const canvasEl = canvas.value
+      if (!canvasEl || !canvasEl.isConnected) {
+        destroyChart()
+        return
+      }
+      destroyChart()
+      chart = new Chart(canvasEl, {
         type: 'line',
         data: chartData.value,
         options: options.value,
@@ -158,9 +170,7 @@ export default {
       renderChart()
     })
 
-    onUnmounted(() => {
-      if (chart) chart.destroy()
-    })
+    onBeforeUnmount(() => destroyChart())
 
     watch(
       () => [chartData.value, options.value, darkMode.value],

@@ -114,7 +114,10 @@ const chartConfig = {
   showLastYear: true,
   targetLabel: '年度目标(利润总额)',
   actualLabel: '实际完成(利润总额)',
-  lastYearLabel: '上一年同期完成(利润总额)'
+  lastYearLabel: '上一年同期完成(利润总额)',
+  showBarAnnotations: true,
+  showYoYGrowth: true,
+  useDepartmentBarStyle: true,
 }
 
 // === 工具函数 ===

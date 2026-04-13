@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import {
   Chart,
   BarController,
@@ -86,6 +86,13 @@ const emit = defineEmits(['update:modelValue'])
 
 const chartCanvas = ref(null)
 let chartInstance = null
+
+const destroyChart = () => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+}
 
 const toNum = (v) => {
   const n = parseFloat(v)
@@ -371,16 +378,24 @@ const buildChartConfig = () => {
 }
 
 const initChart = () => {
-  if (!chartCanvas.value) return
-  const cfg = buildChartConfig()
-  if (!cfg) return
-
-  const ctx = chartCanvas.value.getContext('2d')
-  if (!ctx) return
-
-  if (chartInstance) {
-    chartInstance.destroy()
+  const canvasEl = chartCanvas.value
+  if (!canvasEl || !canvasEl.isConnected) {
+    destroyChart()
+    return
   }
+  const cfg = buildChartConfig()
+  if (!cfg) {
+    destroyChart()
+    return
+  }
+
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) {
+    destroyChart()
+    return
+  }
+
+  destroyChart()
 
   chartInstance = new Chart(ctx, {
     type: cfg.type,
@@ -407,14 +422,15 @@ watch(
   async (open) => {
     if (open) {
       await nextTick()
-      initChart()
+      if (chartCanvas.value && chartCanvas.value.isConnected) {
+        initChart()
+      } else {
+        destroyChart()
+      }
       return
     }
 
-    if (chartInstance) {
-      chartInstance.destroy()
-      chartInstance = null
-    }
+    destroyChart()
   },
 )
 
@@ -423,14 +439,16 @@ watch(
   async () => {
     if (!props.modelValue) return
     await nextTick()
-    initChart()
+    if (chartCanvas.value && chartCanvas.value.isConnected) {
+      initChart()
+    } else {
+      destroyChart()
+    }
   },
   { deep: true },
 )
 
-onUnmounted(() => {
-  if (chartInstance) chartInstance.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 
 <style scoped>

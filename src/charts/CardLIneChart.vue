@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useDark } from '@vueuse/core'
 import { getChartColors } from './ChartjsConfig'
 
@@ -55,6 +55,13 @@ export default {
 
     const canvas = ref(null)
     let chart = null
+        const destroyChart = () => {
+          if (chart) {
+            chart.destroy()
+            chart = null
+          }
+        }
+
     const darkMode = useDark()
     const { tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
 
@@ -177,14 +184,20 @@ export default {
     })
 
     const renderChart = () => {
-      if (!canvas.value || !chartData.value) return
-
-      if (chart) {
-        chart.destroy()
-        chart = null
+      if (!chartData.value) {
+        destroyChart()
+        return
       }
 
-      chart = new Chart(canvas.value, {
+      const canvasEl = canvas.value
+      if (!canvasEl || !canvasEl.isConnected) {
+        destroyChart()
+        return
+      }
+
+      destroyChart()
+
+      chart = new Chart(canvasEl, {
         type: 'line',
         data: chartData.value,
         options: buildOptions(),
@@ -195,9 +208,7 @@ export default {
       renderChart()
     })
 
-    onUnmounted(() => {
-      if (chart) chart.destroy()
-    })
+    onBeforeUnmount(() => destroyChart())
 
     watch(
       () => chartData.value,
@@ -211,6 +222,10 @@ export default {
       () => darkMode.value,
       () => {
         if (!chart) return
+        if (!canvas.value || !canvas.value.isConnected) {
+          destroyChart()
+          return
+        }
         if (darkMode.value) {
           chart.options.plugins.tooltip.bodyColor = tooltipBodyColor.dark
           chart.options.plugins.tooltip.backgroundColor = tooltipBgColor.dark

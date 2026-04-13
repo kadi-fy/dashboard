@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import {
   Chart,
   LineController,
@@ -63,6 +63,13 @@ const emit = defineEmits(['update:modelValue'])
 
 const chartCanvas = ref(null)
 let chartInstance = null
+
+const destroyChart = () => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+}
 
 const toNum = (v) => {
   const n = parseFloat(v)
@@ -91,8 +98,11 @@ const modalTitle = computed(() => {
 const chartTitle = computed(() => `月度${props.metricName}趋势`)
 
 const initChart = () => {
-  if (!chartCanvas.value) return
-  if (!currentRows.value.length) return
+  const canvasEl = chartCanvas.value
+  if (!canvasEl || !canvasEl.isConnected || !currentRows.value.length) {
+    destroyChart()
+    return
+  }
 
   const labels = currentRows.value.map((row) => `${row.time_id % 100}月`)
   const values = currentRows.value.map((row) => toNum(row[props.metricKey]))
@@ -100,13 +110,13 @@ const initChart = () => {
   const chargePerValues = currentRows.value.map((row) => toNum(row.charge_per))
   const contractPerValues = currentRows.value.map((row) => toNum(row.contract_per))
 
-  const ctx = chartCanvas.value.getContext('2d')
-  if (!ctx) return
-
-  if (chartInstance) {
-    chartInstance.destroy()
-    chartInstance = null
+  const ctx = canvasEl.getContext('2d')
+  if (!ctx) {
+    destroyChart()
+    return
   }
+
+  destroyChart()
 
   chartInstance = new Chart(ctx, {
     type: 'line',
@@ -177,14 +187,15 @@ watch(
   async (open) => {
     if (open) {
       await nextTick()
-      initChart()
+      if (chartCanvas.value && chartCanvas.value.isConnected) {
+        initChart()
+      } else {
+        destroyChart()
+      }
       return
     }
 
-    if (chartInstance) {
-      chartInstance.destroy()
-      chartInstance = null
-    }
+    destroyChart()
   },
 )
 
@@ -193,14 +204,16 @@ watch(
   async () => {
     if (!props.modelValue) return
     await nextTick()
-    initChart()
+    if (chartCanvas.value && chartCanvas.value.isConnected) {
+      initChart()
+    } else {
+      destroyChart()
+    }
   },
   { deep: true },
 )
 
-onUnmounted(() => {
-  if (chartInstance) chartInstance.destroy()
-})
+onBeforeUnmount(() => destroyChart())
 </script>
 
 <style scoped>

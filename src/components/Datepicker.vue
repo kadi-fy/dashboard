@@ -50,8 +50,8 @@ export default {
             theme: 'light',
           }),
         ],
-        prevArrow: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;width:26px;height:26px"><path d="M14.5 6L8.5 12L14.5 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-        nextArrow: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;width:26px;height:26px"><path d="M9.5 6L15.5 12L9.5 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        prevArrow: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;width:26px;height:26px"><path d="M14.5 6L8.5 12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M8.5 12L14.5 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
+        nextArrow: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:block;width:26px;height:26px"><path d="M9.5 6L15.5 12" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M15.5 12L9.5 18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
         altInput: true,
         onChange(selectedDates, dateStr) {
           if (dateStr) self.$emit('update:modelValue', dateStr)
