@@ -7,14 +7,10 @@
 			<div class="flex items-center gap-2">
 				<div :class="iconClass" class="relative h-8 w-8 rounded-lg flex items-center justify-center ring-1 ring-cyan-300/40 dark:ring-cyan-400/30 shadow-[0_0_16px_rgba(34,211,238,0.25)] dark:shadow-[0_0_20px_rgba(56,189,248,0.18)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<path v-if="metricType === 'charge'" d="M4 20V10" />
-						<path v-if="metricType === 'charge'" d="M10 20V4" />
-						<path v-if="metricType === 'charge'" d="M16 20v-8" />
-						<path v-if="metricType === 'charge'" d="M22 20v-5" />
-						<path v-if="metricType === 'contract'" d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8z" />
-						<path v-if="metricType === 'contract'" d="M15 3v5h5" />
-						<path v-if="metricType === 'contract'" d="M8 13h8" />
-						<path v-if="metricType === 'contract'" d="M8 17h5" />
+						<path  d="M4 20V10" />
+						<path  d="M10 20V4" />
+						<path  d="M16 20v-8" />
+						<path  d="M22 20v-5" />
 					</svg>
 				</div>
 				<div class="relative">

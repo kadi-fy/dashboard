@@ -7,8 +7,10 @@
 			<div class="flex items-center gap-2">
 				<div class="h-8 w-8 rounded-lg bg-emerald-100/90 text-emerald-600 flex items-center justify-center ring-1 ring-emerald-300/50 dark:ring-emerald-400/30 shadow-[0_0_18px_rgba(16,185,129,0.24)] dark:shadow-[0_0_22px_rgba(52,211,153,0.18)]">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<path d="M3 3v18h18" />
-						<path d="m19 9-5 5-4-4-3 3" />
+						<path  d="M4 20V10" />
+						<path  d="M10 20V4" />
+						<path  d="M16 20v-8" />
+						<path  d="M22 20v-5" />
 					</svg>
 				</div>
 				<div>
