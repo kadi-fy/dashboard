@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center space-x-4 sm:space-x-6 h-full overflow-hidden relative">
     <div class="flex items-center flex-1 min-w-0 group" @mouseenter="pauseMarquee('decline')" @mouseleave="resumeMarquee('decline')">
-      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3">
+      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3 cursor-pointer select-none" @click="openIssueModalByType('decline')">
         <span class="text-[10px] font-bold text-orange-500 uppercase tracking-wide">同比下滑</span>
         <span v-if="declineIssues.length > 0" class="mt-0.5 px-2 py-0.5 text-[10px] font-bold leading-none rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border border-orange-200 dark:border-orange-800/50 shadow-sm">
           {{ declineIssues.length }}
@@ -39,7 +39,7 @@
     <div class="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
 
     <div class="flex items-center flex-1 min-w-0 group" @mouseenter="pauseMarquee('behind')" @mouseleave="resumeMarquee('behind')">
-      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3">
+      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3 cursor-pointer select-none" @click="openIssueModalByType('behind')">
         <span class="text-[10px] font-bold text-red-500 uppercase tracking-wide">进度滞后</span>
         <span v-if="behindIssues.length > 0" class="mt-0.5 px-2 py-0.5 text-[10px] font-bold leading-none rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800/50 shadow-sm">
           {{ behindIssues.length }}
@@ -77,7 +77,7 @@
     <div class="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
 
     <div class="flex items-center flex-1 min-w-0 group" @mouseenter="pauseMarquee('negative')" @mouseleave="resumeMarquee('negative')">
-      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3">
+      <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3 cursor-pointer select-none" @click="openIssueModalByType('negative')">
         <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide">利润亏损</span>
         <span v-if="negativeIssues.length > 0" class="mt-0.5 px-2 py-0.5 text-[10px] font-bold leading-none rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 shadow-sm">
           {{ negativeIssues.length }}
@@ -198,16 +198,27 @@
           class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
           @click.self="closeIssueModal"
         >
-          <div class="w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-white/20 dark:border-gray-700">
-            <div class="px-6 py-4 bg-gradient-to-r text-white" :class="getModalHeaderClass(detailModal.type)">
+          <div class="relative w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.4)] border border-white/40 dark:border-slate-700/70">
+            <div class="pointer-events-none absolute -top-12 -left-12 h-40 w-40 rounded-full blur-3xl opacity-30" :class="getModalHeaderClass(detailModal.type)"></div>
+            <div class="pointer-events-none absolute -bottom-16 -right-10 h-44 w-44 rounded-full bg-slate-300/20 dark:bg-slate-500/20 blur-3xl"></div>
+
+            <div class="relative px-6 py-3.5 bg-gradient-to-r text-white" :class="getModalHeaderClass(detailModal.type)">
               <div class="flex items-center justify-between gap-4">
-                <div>
-                  <h3 class="text-lg font-bold tracking-wide">{{ getTooltipLabel(detailModal.type) }}详情</h3>
-                  <p class="text-xs text-white/85 mt-1">共 {{ modalIssues.length }} 条，列表直出全部告警明细</p>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2.5">
+                    <span class="h-7 w-7 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v18h18" />
+                        <path d="m19 9-5 5-4-4-3 3" />
+                      </svg>
+                    </span>
+                    <h3 class="text-base font-bold tracking-wide truncate">{{ getTooltipLabel(detailModal.type) }}详情</h3>
+                    <span class="px-2.5 py-1 rounded-full bg-white/18 border border-white/25 text-xs text-white/90 whitespace-nowrap">共 {{ modalIssues.length }} 条</span>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  class="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+                  class="h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center border border-white/30"
                   @click="closeIssueModal"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -217,75 +228,93 @@
               </div>
             </div>
 
-            <div class="p-4 md:p-5 bg-gray-50/60 dark:bg-gray-900/20">
-              <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm h-[70vh] overflow-y-auto p-3 md:p-4 space-y-3">
+            <div class="relative p-4 md:p-5 bg-gradient-to-b from-slate-50/70 to-white/80 dark:from-slate-900/55 dark:to-slate-900/75">
+              <div class="rounded-2xl bg-white/85 dark:bg-slate-900/70 border border-white/70 dark:border-slate-700/70 shadow-inner h-[70vh] overflow-y-auto p-3 md:p-4 space-y-3">
                 <template v-if="modalIssues.length">
                   <div
                     v-for="(item, idx) in modalIssues"
                     :key="`issue-${detailModal.type}-${idx}`"
-                    class="rounded-xl border bg-white dark:bg-gray-800 p-4 md:p-5 shadow-sm"
+                    class="relative overflow-hidden rounded-2xl border bg-white/95 dark:bg-slate-800/75 p-4 md:p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                     :class="getMetricChipClass(detailModal.type)"
                   >
+                    <div class="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-55"></div>
+                    <div class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-current/10 blur-2xl"></div>
+
                     <div class="flex items-start justify-between gap-3 mb-3">
-                      <div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-[11px] px-2 py-0.5 rounded-full border border-current/20">#{{ idx + 1 }}</span>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="text-[11px] px-2 py-0.5 rounded-full border border-current/30 bg-white/70 dark:bg-slate-900/40">#{{ idx + 1 }}</span>
                           <h4 class="text-base font-bold text-gray-800 dark:text-gray-100">{{ item.org_name }}</h4>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ item.metric }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">{{ item.metric }}</p>
                       </div>
-                      <span class="text-xs px-2.5 py-1 rounded-full border bg-white/70 dark:bg-gray-900/40" :class="getMetricChipClass(detailModal.type)">
+                      <span class="text-xs px-2.5 py-1 rounded-full border bg-white/85 dark:bg-slate-900/45 shadow-sm whitespace-nowrap" :class="getMetricChipClass(detailModal.type)">
                         {{ getIssueMainValue(item, detailModal.type) }}
                       </span>
                     </div>
 
-                    <div v-if="detailModal.type === 'decline'" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">去年同期</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.last_year_value) }}</div>
+                    <div v-if="detailModal.type === 'decline'" class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+                      <div class="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">去年同期</div>
+                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.last_year_value) }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">本期数值</div>
+                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
+                        </div>
                       </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">本期数值</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
-                      </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">下降幅度</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ item.decline_percent }}</div>
-                      </div>
-                    </div>
-
-                    <div v-else-if="detailModal.type === 'behind'" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">目标值</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.expected_min) }}</div>
-                      </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">完成值</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
-                      </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">缺口</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.gap_amount) }}</div>
-                      </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">完成率</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ item.completion_rate }}</div>
+                      <div class="sm:col-span-2 rounded-xl border border-orange-200/80 dark:border-orange-900/40 bg-gradient-to-br from-orange-50/90 to-amber-50/85 dark:from-orange-900/25 dark:to-amber-900/20 p-3 flex flex-col justify-center items-center text-center">
+                        <div class="text-[11px] uppercase tracking-[0.1em] text-orange-500 dark:text-orange-300">下降幅度</div>
+                        <div class="mt-1 text-2xl font-extrabold text-orange-600 dark:text-orange-300 leading-none">{{ item.decline_percent }}</div>
+                        <div class="mt-1 text-[11px] text-orange-500/80 dark:text-orange-300/75">同比预警</div>
                       </div>
                     </div>
 
-                    <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">利润类型</div>
+                    <div v-else-if="detailModal.type === 'behind'" class="grid grid-cols-1 sm:grid-cols-6 gap-2.5">
+                      <div class="sm:col-span-2 rounded-xl border border-red-200/80 dark:border-red-900/40 bg-gradient-to-b from-red-50/90 to-rose-50/85 dark:from-red-900/25 dark:to-rose-900/20 p-3 flex flex-col justify-center items-center text-center">
+                        <div class="text-[11px] uppercase tracking-[0.1em] text-red-500 dark:text-red-300">完成率</div>
+                        <div class="mt-1 text-2xl font-extrabold text-red-600 dark:text-red-300 leading-none">{{ item.completion_rate }}</div>
+                        <div class="mt-1 text-[11px] text-red-500/80 dark:text-red-300/75">进度滞后</div>
+                      </div>
+                      <div class="sm:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">目标值</div>
+                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.expected_min) }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">完成值</div>
+                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">缺口</div>
+                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.gap_amount) }}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-else class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+                      <div class="sm:col-span-3 rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                        <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">利润类型</div>
                         <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ item.org_type === 'department' ? '当前部门利润' : '当前企业利润总额' }}</div>
                       </div>
-                      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div class="text-[11px] text-gray-500">利润值</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.profit_value) }}</div>
+                      <div class="sm:col-span-2 rounded-xl border border-purple-200/80 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/90 to-fuchsia-50/85 dark:from-purple-900/25 dark:to-fuchsia-900/20 p-3 flex flex-col justify-center items-center text-center">
+                        <div class="text-[11px] uppercase tracking-[0.1em] text-purple-500 dark:text-purple-300">利润值</div>
+                        <div class="mt-1 text-2xl font-extrabold text-purple-700 dark:text-purple-300 leading-none">{{ formatNumber(item.profit_value) }}</div>
+                        <div class="mt-1 text-[11px] text-purple-500/80 dark:text-purple-300/75">低于盈亏平衡点</div>
                       </div>
                     </div>
                   </div>
                 </template>
-                <div v-else class="h-full flex items-center justify-center text-sm text-gray-400">暂无可展示的预警详情</div>
+                <div v-else class="h-full flex flex-col items-center justify-center text-sm text-gray-400">
+                  <div class="h-10 w-10 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center mb-2 text-gray-300 dark:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 3v18h18" />
+                      <path d="m19 9-5 5-4-4-3 3" />
+                    </svg>
+                  </div>
+                  暂无可展示的预警详情
+                </div>
               </div>
             </div>
           </div>
@@ -374,6 +403,15 @@ export default {
         visible: true,
         type: issue.type,
         issue,
+      }
+    }
+
+    const openIssueModalByType = (type) => {
+      handleLeave()
+      detailModal.value = {
+        visible: true,
+        type,
+        issue: null,
       }
     }
 
@@ -569,6 +607,7 @@ export default {
       pauseMarquee,
       resumeMarquee,
       handleClick,
+      openIssueModalByType,
       formatNumber,
       tooltip,
       detailModal,
@@ -617,11 +656,22 @@ export default {
 
 .modal-pop-enter-active,
 .modal-pop-leave-active {
-  transition: opacity 0.22s ease;
+  transition: opacity 0.24s ease;
 }
 
 .modal-pop-enter-from,
 .modal-pop-leave-to {
   opacity: 0;
+}
+
+.modal-pop-enter-from > div,
+.modal-pop-leave-to > div {
+  transform: translateY(8px) scale(0.985);
+  opacity: 0.96;
+}
+
+.modal-pop-enter-active > div,
+.modal-pop-leave-active > div {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
 }
 </style>

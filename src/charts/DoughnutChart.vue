@@ -136,21 +136,33 @@ const formatTarget = (v) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .gauge-core {
   position: relative;
   width: var(--gauge-size);
   height: var(--gauge-size);
+  border-radius: 9999px;
+}
+
+.gauge-core::after {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 9999px;
+  background: conic-gradient(from 200deg, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.24) 56deg, rgba(255, 255, 255, 0) 120deg);
+  -webkit-mask: radial-gradient(circle, transparent 69%, #000 72%, #000 74%, transparent 77%);
+  mask: radial-gradient(circle, transparent 69%, #000 72%, #000 74%, transparent 77%);
+  pointer-events: none;
 }
 
 .gauge-halo {
   position: absolute;
-  inset: -10%;
+  inset: -12%;
   border-radius: 9999px;
-  filter: blur(8px);
-  opacity: 0.9;
+  filter: blur(12px);
+  opacity: 0.56;
 }
 
 .gauge-svg {
@@ -161,50 +173,57 @@ const formatTarget = (v) => {
 
 .gauge-track {
   fill: none;
-  stroke: #e7edf6;
-  stroke-width: 12;
-  opacity: 0.95;
+  stroke: rgba(226, 232, 240, 0.5);
+  stroke-width: 10;
+  opacity: 1;
 }
 
 .gauge-progress {
   fill: none;
-  stroke-width: 12;
+  stroke-width: 10;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.55s ease;
-  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.32));
+  transition: stroke-dashoffset 0.78s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.18));
 }
 
 .gauge-overflow-track {
   fill: none;
-  stroke: rgba(216, 180, 254, 0.42);
-  stroke-width: 6;
+  stroke: rgba(216, 180, 254, 0.32);
+  stroke-width: 5;
 }
 
 .gauge-overflow-progress {
   fill: none;
-  stroke-width: 6;
+  stroke-width: 5;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.55s ease;
-  filter: drop-shadow(0 0 6px rgba(196, 102, 255, 0.45));
+  transition: stroke-dashoffset 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 5px rgba(196, 102, 255, 0.3));
 }
 
 .gauge-ticks {
   position: absolute;
-  inset: 4px;
+  inset: 6px;
   border-radius: 9999px;
   transform: rotate(-90deg);
-  -webkit-mask: radial-gradient(circle, transparent 72%, #000 72.8%, #000 74.4%, transparent 75.2%);
-  mask: radial-gradient(circle, transparent 72%, #000 72.8%, #000 74.4%, transparent 75.2%);
-  background: repeating-conic-gradient(rgba(165, 180, 206, 0.36) 0deg 1deg, transparent 1deg 14deg);
+  -webkit-mask: radial-gradient(circle, transparent 73%, #000 73.6%, #000 74.7%, transparent 75.4%);
+  mask: radial-gradient(circle, transparent 73%, #000 73.6%, #000 74.7%, transparent 75.4%);
+  background: repeating-conic-gradient(rgba(148, 163, 184, 0.13) 0deg 0.8deg, transparent 0.8deg 16deg);
 }
 
 .gauge-center::before {
   content: '';
   position: absolute;
-  inset: 20%;
+  inset: 23%;
   border-radius: 9999px;
-  background: radial-gradient(circle at 30% 25%, #ffffff 0%, #f8fafc 55%, #eef2f7 100%);
-  box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.9);
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.16) 45%, rgba(255, 255, 255, 0.06) 100%),
+    linear-gradient(170deg, rgba(248, 250, 252, 0.52) 0%, rgba(241, 245, 249, 0.24) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -10px 16px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px) saturate(1.15);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
   z-index: 0;
 }
 
@@ -226,19 +245,20 @@ const formatTarget = (v) => {
   display: flex;
   align-items: baseline;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
   color: #111827;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.45);
 }
 
 .gauge-value-number {
-  font-size: 1.2rem;
-  letter-spacing: -0.02em;
+  font-size: 1.18rem;
+  letter-spacing: -0.03em;
 }
 
 .gauge-value-unit {
   margin-left: 1px;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 650;
   color: #6b7280;
 }
 
@@ -252,17 +272,17 @@ const formatTarget = (v) => {
 }
 
 .gauge-meta-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
   color: #64748b;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .gauge-meta-target {
   margin-top: 2px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #1f3a8a;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 @keyframes gaugeFloat {
@@ -276,12 +296,22 @@ const formatTarget = (v) => {
 }
 
 :global(.dark) .gauge-center::before {
-  background: radial-gradient(circle at 30% 25%, #1f2937 0%, #111827 55%, #0f172a 100%);
-  box-shadow: inset 0 0 0 1px rgba(71, 85, 105, 0.65);
+  background:
+    radial-gradient(circle at 28% 22%, rgba(148, 163, 184, 0.28) 0%, rgba(51, 65, 85, 0.2) 45%, rgba(15, 23, 42, 0.28) 100%),
+    linear-gradient(170deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.34) 100%);
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(226, 232, 240, 0.18),
+    inset 0 -10px 16px rgba(2, 6, 23, 0.42);
+}
+
+:global(.dark) .gauge-track {
+  stroke: rgba(71, 85, 105, 0.5);
 }
 
 :global(.dark) .gauge-value {
   color: #f1f5f9;
+  text-shadow: none;
 }
 
 :global(.dark) .gauge-value-unit,

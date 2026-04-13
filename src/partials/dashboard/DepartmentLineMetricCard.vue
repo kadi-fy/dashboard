@@ -16,7 +16,11 @@
           <p class="text-[10px] tracking-[0.2em] uppercase" :class="subtitleClass">{{ subtitle }}</p>
         </div>
       </div>
-      <div class="text-xs text-slate-600 dark:text-slate-300 rounded-full px-3 py-1 ring-1 backdrop-blur-sm" :class="headerTheme.hintPillClass">点击折线点查看趋势</div>
+      <div class="hidden md:flex items-center gap-1.5" aria-hidden="true">
+        <span class="h-2 w-2 rounded-full ring-2 ring-white/70 dark:ring-slate-900/60" :class="headerTheme.signalDotClass"></span>
+        <span class="h-1.5 w-8 rounded-full" :class="headerTheme.signalBarClass"></span>
+        <span class="h-1.5 w-4 rounded-full opacity-70" :class="headerTheme.signalBarClass"></span>
+      </div>
     </header>
 
     <div class="p-3 h-[300px] relative bg-white dark:bg-gray-800">
@@ -90,7 +94,9 @@ const headerTheme = computed(() => {
       glowRightClass: 'bg-sky-300/20 dark:bg-sky-400/15',
       energyLineClass: 'via-cyan-400/70 dark:via-cyan-300/60',
       iconFrameClass: 'ring-cyan-300/35 dark:ring-cyan-400/25 shadow-[0_0_14px_rgba(34,211,238,0.2)] dark:shadow-[0_0_18px_rgba(56,189,248,0.14)]',
-      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-cyan-200/70 dark:ring-cyan-500/20',
+      signalDotClass: 'bg-cyan-400/90 dark:bg-cyan-300/85',
+      signalBarClass: 'bg-cyan-400/75 dark:bg-cyan-300/65',
+      signalFrameClass: 'border-cyan-200/70 dark:border-cyan-400/30 text-cyan-600 dark:text-cyan-300 bg-white/55 dark:bg-slate-900/45',
     },
     'line-cost-per': {
       headerClass: 'border-amber-100/80 dark:border-amber-500/20 bg-gradient-to-r from-slate-50 via-amber-50/70 to-orange-50/75 dark:from-slate-900/85 dark:via-amber-950/25 dark:to-slate-900/70',
@@ -98,7 +104,9 @@ const headerTheme = computed(() => {
       glowRightClass: 'bg-orange-300/20 dark:bg-orange-400/15',
       energyLineClass: 'via-amber-400/70 dark:via-amber-300/60',
       iconFrameClass: 'ring-amber-300/35 dark:ring-amber-400/25 shadow-[0_0_14px_rgba(251,191,36,0.2)] dark:shadow-[0_0_18px_rgba(245,158,11,0.14)]',
-      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-amber-200/70 dark:ring-amber-500/20',
+      signalDotClass: 'bg-amber-400/90 dark:bg-amber-300/85',
+      signalBarClass: 'bg-amber-400/75 dark:bg-amber-300/65',
+      signalFrameClass: 'border-amber-200/70 dark:border-amber-400/30 text-amber-600 dark:text-amber-300 bg-white/55 dark:bg-slate-900/45',
     },
     'line-profit-per': {
       headerClass: 'border-emerald-100/80 dark:border-emerald-500/20 bg-gradient-to-r from-slate-50 via-emerald-50/70 to-teal-50/75 dark:from-slate-900/85 dark:via-emerald-950/25 dark:to-slate-900/70',
@@ -106,7 +114,9 @@ const headerTheme = computed(() => {
       glowRightClass: 'bg-teal-300/20 dark:bg-teal-400/15',
       energyLineClass: 'via-emerald-400/70 dark:via-emerald-300/60',
       iconFrameClass: 'ring-emerald-300/35 dark:ring-emerald-400/25 shadow-[0_0_14px_rgba(52,211,153,0.2)] dark:shadow-[0_0_18px_rgba(16,185,129,0.14)]',
-      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-emerald-200/70 dark:ring-emerald-500/20',
+      signalDotClass: 'bg-emerald-400/90 dark:bg-emerald-300/85',
+      signalBarClass: 'bg-emerald-400/75 dark:bg-emerald-300/65',
+      signalFrameClass: 'border-emerald-200/70 dark:border-emerald-400/30 text-emerald-600 dark:text-emerald-300 bg-white/55 dark:bg-slate-900/45',
     },
     'line-headcount': {
       headerClass: 'border-indigo-100/80 dark:border-indigo-500/20 bg-gradient-to-r from-slate-50 via-indigo-50/70 to-blue-50/75 dark:from-slate-900/85 dark:via-indigo-950/25 dark:to-slate-900/70',
@@ -114,7 +124,9 @@ const headerTheme = computed(() => {
       glowRightClass: 'bg-blue-300/20 dark:bg-blue-400/15',
       energyLineClass: 'via-indigo-400/70 dark:via-indigo-300/60',
       iconFrameClass: 'ring-indigo-300/35 dark:ring-indigo-400/25 shadow-[0_0_14px_rgba(129,140,248,0.2)] dark:shadow-[0_0_18px_rgba(99,102,241,0.14)]',
-      hintPillClass: 'bg-white/60 dark:bg-slate-900/45 ring-indigo-200/70 dark:ring-indigo-500/20',
+      signalDotClass: 'bg-indigo-400/90 dark:bg-indigo-300/85',
+      signalBarClass: 'bg-indigo-400/75 dark:bg-indigo-300/65',
+      signalFrameClass: 'border-indigo-200/70 dark:border-indigo-400/30 text-indigo-600 dark:text-indigo-300 bg-white/55 dark:bg-slate-900/45',
     },
   }
 
@@ -158,7 +170,7 @@ const renderChart = () => {
           pointHoverBackgroundColor: props.primaryColor,
           pointHoverBorderColor: props.primaryColor,
           pointBorderWidth: 0,
-          tension: 0.25,
+          tension: 0,
         },
         ...(props.secondaryMetricKey
           ? [
@@ -169,14 +181,14 @@ const renderChart = () => {
                 backgroundColor: 'rgba(20, 184, 166, 0.1)',
                 fill: false,
                 borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 5,
+                pointRadius: 4,
+                pointHoverRadius: 6,
                 pointBackgroundColor: props.secondaryColor,
                 pointBorderColor: props.secondaryColor,
                 pointHoverBackgroundColor: props.secondaryColor,
                 pointHoverBorderColor: props.secondaryColor,
                 pointBorderWidth: 0,
-                tension: 0.25,
+                tension: 0,
               },
             ]
           : []),

@@ -134,7 +134,7 @@ const initChart = () => {
                 borderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                tension: 0.25,
+                tension: 0,
               },
               {
                 label: '人均合同',
@@ -145,7 +145,7 @@ const initChart = () => {
                 borderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                tension: 0.25,
+                tension: 0,
               },
             ]
           : [
@@ -158,7 +158,7 @@ const initChart = () => {
                 borderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                tension: 0.25,
+                tension: 0,
               },
             ]),
       ],
