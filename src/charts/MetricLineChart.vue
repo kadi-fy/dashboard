@@ -62,7 +62,13 @@ export default {
             backgroundColor: 'rgba(37, 99, 235, 0.12)',
             fill: true,
             borderWidth: 2,
-            pointRadius: 1,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#2563eb',
+            pointBorderColor: '#2563eb',
+            pointHoverBackgroundColor: '#2563eb',
+            pointHoverBorderColor: '#2563eb',
+            pointBorderWidth: 0,
             tension: 0.25,
           },
           {
@@ -70,7 +76,13 @@ export default {
             data: props.lastyearValues,
             borderColor: 'rgba(148, 163, 184, 0.7)',
             borderWidth: 2,
-            pointRadius: 0,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: 'rgba(148, 163, 184, 0.9)',
+            pointBorderColor: 'rgba(148, 163, 184, 0.9)',
+            pointHoverBackgroundColor: 'rgba(148, 163, 184, 0.9)',
+            pointHoverBorderColor: 'rgba(148, 163, 184, 0.9)',
+            pointBorderWidth: 0,
             borderDash: [4, 4],
             tension: 0.25,
           },
@@ -158,7 +170,14 @@ export default {
         destroyChart()
         return
       }
-      destroyChart()
+      // 如果图表实例已存在，原地更新数据，避免销毁重建带来的卡顿
+      if (chart) {
+        chart.data = chartData.value
+        // 避免保留上一次悬停态导致点半径异常放大
+        chart.setActiveElements([])
+        chart.update('none')
+        return
+      }
       chart = new Chart(canvasEl, {
         type: 'line',
         data: chartData.value,
@@ -172,12 +191,26 @@ export default {
 
     onBeforeUnmount(() => destroyChart())
 
+    // 数据变化时原地更新
     watch(
-      () => [chartData.value, options.value, darkMode.value],
+      () => chartData.value,
       () => {
         renderChart()
       },
       { deep: true },
+    )
+
+    // 暗色模式或 options 变化时重建（颜色需要同步）
+    watch(
+      () => [options.value, darkMode.value],
+      () => {
+        if (!chart || !canvas.value?.isConnected) {
+          renderChart()
+          return
+        }
+        chart.options = options.value
+        chart.update('none')
+      },
     )
 
     return {

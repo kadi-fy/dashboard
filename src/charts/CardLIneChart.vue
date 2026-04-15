@@ -53,6 +53,31 @@ export default {
       return `${numericValue.toLocaleString('zh-CN')}万元`
     }
 
+    const formatTooltipMonth = (items) => {
+      const firstItem = items?.[0]
+      if (!firstItem) return false
+
+      if (firstItem.label) return String(firstItem.label)
+
+      if (typeof firstItem.dataIndex === 'number') {
+        return `${firstItem.dataIndex + 1}月`
+      }
+
+      const rawX = firstItem.raw?.x
+      if (typeof rawX === 'string') {
+        const match = rawX.match(/^(\d{2})-(\d{2})-(\d{4})$/)
+        if (match) return `${Number(match[1])}月`
+      }
+
+      const parsedX = firstItem.parsed?.x
+      if (Number.isFinite(parsedX)) {
+        const date = new Date(parsedX)
+        if (!Number.isNaN(date.getTime())) return `${date.getMonth() + 1}月`
+      }
+
+      return false
+    }
+
     const canvas = ref(null)
     let chart = null
         const destroyChart = () => {
@@ -63,7 +88,7 @@ export default {
         }
 
     const darkMode = useDark()
-    const { tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
+  const { tooltipTitleColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = getChartColors()
 
     const dataFromSeries = computed(() => {
       const len = Math.max(
@@ -83,7 +108,14 @@ export default {
           borderColor: '#eab308',
           borderWidth: 2,
           borderDash: [4, 4],
-          pointRadius: 0,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#eab308',
+          pointBorderColor: '#eab308',
+          pointHoverBackgroundColor: '#eab308',
+          pointHoverBorderColor: '#eab308',
+          pointBorderWidth: 0,
+          pointStyle: 'circle',
           tension: 0.25,
         })
       }
@@ -96,7 +128,14 @@ export default {
           backgroundColor: 'rgba(37, 99, 235, 0.12)',
           fill: true,
           borderWidth: 2,
-          pointRadius: 1,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#2563eb',
+          pointBorderColor: '#2563eb',
+          pointHoverBackgroundColor: '#2563eb',
+          pointHoverBorderColor: '#2563eb',
+          pointBorderWidth: 0,
+          pointStyle: 'circle',
           tension: 0.25,
         })
       }
@@ -107,7 +146,14 @@ export default {
           data: props.lastyearValues,
           borderColor: 'rgba(148, 163, 184, 0.5)',
           borderWidth: 2,
-          pointRadius: 0,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: 'rgba(148, 163, 184, 0.9)',
+          pointBorderColor: 'rgba(148, 163, 184, 0.9)',
+          pointHoverBackgroundColor: 'rgba(148, 163, 184, 0.9)',
+          pointHoverBorderColor: 'rgba(148, 163, 184, 0.9)',
+          pointBorderWidth: 0,
+          pointStyle: 'circle',
           borderDash: [3, 3],
           tension: 0.25,
         })
@@ -156,9 +202,15 @@ export default {
           intersect: false,
           displayColors: true,
           callbacks: {
-            title: (items) => items[0]?.label || false,
+            title: (items) => formatTooltipMonth(items),
             label: (context) => `${context.dataset.label}: ${formatChineseAmount(context.parsed.y)}`,
           },
+          titleColor: darkMode.value ? tooltipTitleColor.dark : tooltipTitleColor.light,
+          titleFont: {
+            size: 12,
+            weight: 600,
+          },
+          titleMarginBottom: 6,
           bodyColor: darkMode.value ? tooltipBodyColor.dark : tooltipBodyColor.light,
           backgroundColor: darkMode.value ? tooltipBgColor.dark : tooltipBgColor.light,
           borderColor: darkMode.value ? tooltipBorderColor.dark : tooltipBorderColor.light,
@@ -195,7 +247,14 @@ export default {
         return
       }
 
-      destroyChart()
+      // 如果图表实例已存在，原地更新数据，避免销毁重建带来的卡顿
+      if (chart) {
+        chart.data = chartData.value
+        // 避免保留上一次悬停态导致点半径异常放大
+        chart.setActiveElements([])
+        chart.update('none')
+        return
+      }
 
       chart = new Chart(canvasEl, {
         type: 'line',
@@ -227,10 +286,12 @@ export default {
           return
         }
         if (darkMode.value) {
+          chart.options.plugins.tooltip.titleColor = tooltipTitleColor.dark
           chart.options.plugins.tooltip.bodyColor = tooltipBodyColor.dark
           chart.options.plugins.tooltip.backgroundColor = tooltipBgColor.dark
           chart.options.plugins.tooltip.borderColor = tooltipBorderColor.dark
         } else {
+          chart.options.plugins.tooltip.titleColor = tooltipTitleColor.light
           chart.options.plugins.tooltip.bodyColor = tooltipBodyColor.light
           chart.options.plugins.tooltip.backgroundColor = tooltipBgColor.light
           chart.options.plugins.tooltip.borderColor = tooltipBorderColor.light

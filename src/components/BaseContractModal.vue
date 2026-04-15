@@ -240,7 +240,9 @@ const initChart = () => {
           pointHoverRadius: 6,
           pointBackgroundColor: '#FCD34D',
           pointBorderColor: '#FCD34D',
-          pointBorderWidth: 1
+          pointHoverBackgroundColor: '#FCD34D',
+          pointHoverBorderColor: '#FCD34D',
+          pointBorderWidth: 0
         },
         {
           type: 'bar',

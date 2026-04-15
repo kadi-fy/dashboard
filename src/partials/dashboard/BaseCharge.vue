@@ -16,14 +16,16 @@
       </div>
 
       <!-- 圆环图：使用当前月的完成率 -->
-      <div class="flex space-x-2 ml-4">
-        <DoughnutChart 
+      <div class="flex items-start ml-4">
+        <CyberRingProgress
           :value="completionRate"
+          :max="100"
+          :size="94"
+          :decimals="0"
+          label="确保计划"
+          :show-label="false"
+          :show-target="true"
           :target-value="currentSnapshot.charge_plan"
-          :target="100"
-          :selected-month="selectedMonth"
-          :color="colors"
-          width="100" height="100" label="确保计划"
         />
       </div>
     </div>
@@ -51,7 +53,7 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import CardLIneChart from '../../charts/CardLIneChart.vue'
-import DoughnutChart from '../../charts/DoughnutChart.vue'
+import CyberRingProgress from '../../charts/CyberRingProgress.vue'
 import BaseChargeModal from '../../components/BaseChargeModal.vue' 
 
 import { GLOBAL_CONFIG } from '../../utils/Utils'
@@ -61,7 +63,7 @@ const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 6
 
 export default {
   name: 'CompanyTotalProfit',
-  components: { CardLIneChart, DoughnutChart, BaseChargeModal },
+  components: { CardLIneChart, CyberRingProgress, BaseChargeModal },
   props: {
     // 不再需要外部传入复杂的数组，只需要标识符
     orgId: { type: [Number, String], required: true }, 

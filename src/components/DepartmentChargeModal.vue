@@ -244,7 +244,13 @@ const initChart = () => {
           backgroundColor: 'rgba(212, 175, 55, 0.3)',
           borderWidth: 2,
           fill: false,
-          pointRadius: 0
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: 'rgba(212, 175, 55, 1)',
+          pointBorderColor: 'rgba(212, 175, 55, 1)',
+          pointHoverBackgroundColor: 'rgba(212, 175, 55, 1)',
+          pointHoverBorderColor: 'rgba(212, 175, 55, 1)',
+          pointBorderWidth: 0
         },
         {
           type: 'bar',

@@ -137,3 +137,27 @@
     border-color: var(--color-gray-200, currentColor);
   }
 }
+
+/* Global dark-mode readability boost for common muted text tokens used across cards/modals/charts */
+@layer utilities {
+  .dark .text-gray-300,
+  .dark .dark\:text-gray-300 {
+    color: #e2e8f0 !important;
+  }
+
+  .dark .text-gray-400,
+  .dark .dark\:text-gray-400,
+  .dark .text-slate-400,
+  .dark .dark\:text-slate-400 {
+    color: #cbd5e1 !important;
+  }
+
+  .dark .text-gray-500,
+  .dark .dark\:text-gray-500,
+  .dark .text-gray-500\/90,
+  .dark .dark\:text-gray-500\/90,
+  .dark .text-slate-500,
+  .dark .dark\:text-slate-500 {
+    color: #94a3b8 !important;
+  }
+}

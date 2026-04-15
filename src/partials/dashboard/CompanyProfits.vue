@@ -42,7 +42,7 @@
 
     <!-- 图表区域：1月隐藏，其他月份平滑显示 -->
     <transition name="line-chart-fade" mode="out-in">
-      <div v-if="showLineChart" class="h-[130px] overflow-hidden">
+      <div v-show="showLineChart" class="h-[130px] overflow-hidden">
         <CardLIneChart :current-values="currentValues" :lastyear-values="lastYearValues" :target-values="targetValues" :layout-padding="0" />
       </div>
     </transition>

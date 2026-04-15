@@ -97,6 +97,16 @@ const modalTitle = computed(() => {
 
 const chartTitle = computed(() => `月度${props.metricName}趋势`)
 
+const metricColorMap = {
+  charge_per: { line: '#0ea5e9', fill: 'rgba(14, 165, 233, 0.12)' },
+  contract_per: { line: '#14b8a6', fill: 'rgba(20, 184, 166, 0.12)' },
+  cost_per: { line: '#f59e0b', fill: 'rgba(245, 158, 11, 0.12)' },
+  profit_per: { line: '#10b981', fill: 'rgba(16, 185, 129, 0.12)' },
+  headcount: { line: '#6366f1', fill: 'rgba(99, 102, 241, 0.12)' },
+}
+
+const resolveMetricTheme = (metricKey) => metricColorMap[metricKey] || { line: '#2563eb', fill: 'rgba(37, 99, 235, 0.12)' }
+
 const initChart = () => {
   const canvasEl = chartCanvas.value
   if (!canvasEl || !canvasEl.isConnected || !currentRows.value.length) {
@@ -109,6 +119,7 @@ const initChart = () => {
   const isChargeContractPer = props.metricKey === 'charge_contract_per'
   const chargePerValues = currentRows.value.map((row) => toNum(row.charge_per))
   const contractPerValues = currentRows.value.map((row) => toNum(row.contract_per))
+  const singleMetricTheme = resolveMetricTheme(props.metricKey)
 
   const ctx = canvasEl.getContext('2d')
   if (!ctx) {
@@ -132,8 +143,16 @@ const initChart = () => {
                 backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 fill: true,
                 borderWidth: 2,
-                pointRadius: 4,
+                pointRadius: 3,
                 pointHoverRadius: 6,
+                pointHitRadius: 10,
+                pointBackgroundColor: '#2563eb',
+                pointBorderColor: '#2563eb',
+                pointHoverBackgroundColor: '#2563eb',
+                pointHoverBorderColor: '#2563eb',
+                pointHoverBorderWidth: 0,
+                pointBorderWidth: 0,
+                pointStyle: 'circle',
                 tension: 0,
               },
               {
@@ -143,8 +162,16 @@ const initChart = () => {
                 backgroundColor: 'rgba(20, 184, 166, 0.08)',
                 fill: false,
                 borderWidth: 2,
-                pointRadius: 4,
+                pointRadius: 3,
                 pointHoverRadius: 6,
+                pointHitRadius: 10,
+                pointBackgroundColor: '#14b8a6',
+                pointBorderColor: '#14b8a6',
+                pointHoverBackgroundColor: '#14b8a6',
+                pointHoverBorderColor: '#14b8a6',
+                pointHoverBorderWidth: 0,
+                pointBorderWidth: 0,
+                pointStyle: 'circle',
                 tension: 0,
               },
             ]
@@ -152,12 +179,20 @@ const initChart = () => {
               {
                 label: props.metricName,
                 data: values,
-                borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                borderColor: singleMetricTheme.line,
+                backgroundColor: singleMetricTheme.fill,
                 fill: true,
                 borderWidth: 2,
-                pointRadius: 4,
+                pointRadius: 3,
                 pointHoverRadius: 6,
+                pointHitRadius: 10,
+                pointBackgroundColor: singleMetricTheme.line,
+                pointBorderColor: singleMetricTheme.line,
+                pointHoverBackgroundColor: singleMetricTheme.line,
+                pointHoverBorderColor: singleMetricTheme.line,
+                pointHoverBorderWidth: 0,
+                pointBorderWidth: 0,
+                pointStyle: 'circle',
                 tension: 0,
               },
             ]),
@@ -166,6 +201,13 @@ const initChart = () => {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      elements: {
+        point: {
+          pointStyle: 'circle',
+          borderWidth: 0,
+          hoverBorderWidth: 0,
+        },
+      },
       plugins: {
         legend: { position: 'top' },
         tooltip: {

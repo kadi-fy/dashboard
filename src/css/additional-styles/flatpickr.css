@@ -159,6 +159,8 @@
 }
 
 .flatpickr-months {
+    display: grid;
+    grid-template-columns: 32px 1fr 32px;
     align-items: center;
     margin-top: -8px;
     margin-bottom: 6px;
@@ -167,8 +169,20 @@
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
     position: static;
-    height: auto;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     @apply text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300;    
+}
+
+.flatpickr-months .flatpickr-prev-month.flatpickr-disabled,
+.flatpickr-months .flatpickr-next-month.flatpickr-disabled {
+    display: inline-flex !important;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
@@ -184,17 +198,22 @@
 }
 
 .flatpickr-months .flatpickr-prev-month {
-    margin-left: -10px;
+    margin-left: 0;
+    justify-self: start;
 }
 
 .flatpickr-months .flatpickr-next-month {
-    margin-right: -10px;
+    margin-right: 0;
+    justify-self: end;
 }
 
 .flatpickr-months .flatpickr-month {
     @apply text-gray-800 dark:text-gray-100;
     height: auto;
     line-height: inherit;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .flatpickr-current-month {
@@ -202,8 +221,14 @@
     position: static;
     height: auto;
     width: auto;
-    left: auto;
+    min-width: 8.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
     padding: 0;
+    visibility: visible;
+    opacity: 1;
 }
 
 .flatpickr-current-month span.cur-month {
@@ -217,6 +242,30 @@
 .flatpickr-current-month input.cur-year {
     font-weight: inherit;
     box-shadow: none !important;
+    width: 4ch;
+    min-width: 4ch;
+    display: inline-block;
+    color: inherit;
+    background: transparent;
+    text-align: center;
+    padding: 0;
+    appearance: textfield;
+    -moz-appearance: textfield;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+.flatpickr-current-month input.cur-year::-webkit-outer-spin-button,
+.flatpickr-current-month input.cur-year::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    display: inline-flex;
+    align-items: center;
+    width: 4ch;
+    min-width: 4ch;
 }
 
 .numInputWrapper:hover {

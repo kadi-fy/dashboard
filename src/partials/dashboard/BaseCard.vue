@@ -15,8 +15,6 @@
           <div class="text-xs text-gray-600 dark:text-gray-400">万元</div>
         </div>
       </div>
-
-      <!-- 圆环图：使用当前月的完成率 -->
       <div class="flex-shrink-0">
         <div
           v-if="showValueStatusBadge"
@@ -42,23 +40,24 @@
             </svg>
           </div>
         </div>
-        <DoughnutChart 
-          v-else
-          :value="completionRate"
-          :target-value="currentSnapshot[config.planField]"
-          :target="100"
-          :selected-month="selectedMonth"
-          :color="colors"
-          width="90" 
-          height="90" 
-          label="确保计划"
-        />
+        <div v-else class="flex items-start">
+          <CyberRingProgress
+            :value="completionRate"
+            :max="100"
+            :size="94"
+            :decimals="0"
+            label="确保计划"
+            :show-label="false"
+            :show-target="true"
+            :target-value="currentSnapshot[config.planField]"
+          />
+        </div>
       </div>
     </div>
 
     <!-- 折线图：1月隐藏，2月及之后平滑显示 -->
     <transition name="line-chart-fade" mode="out-in">
-      <div v-if="showLineChart" class="h-[120px] overflow-hidden">
+      <div v-show="showLineChart" class="h-[120px] overflow-hidden">
         <CardLIneChart 
           :current-values="chartCurrentValues" 
           :lastyear-values="chartLastYearValues" 
@@ -82,7 +81,7 @@
 <script>
 import { ref, computed, watch } from 'vue'
 import CardLIneChart from '../../charts/CardLIneChart.vue'
-import DoughnutChart from '../../charts/DoughnutChart.vue'
+import CyberRingProgress from '../../charts/CyberRingProgress.vue'
 import BaseModal from '../../components/BaseModal.vue'
 import { GLOBAL_CONFIG } from '../../utils/Utils'
 
@@ -93,7 +92,7 @@ export default {
   name: 'BaseCard',
   components: { 
     CardLIneChart, 
-    DoughnutChart, 
+    CyberRingProgress,
     BaseModal 
   },
   props: {
