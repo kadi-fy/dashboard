@@ -161,6 +161,10 @@ export default {
 
 <style>
 @import 'flatpickr/dist/plugins/monthSelect/style.css';
+.flatpickr-calendar {
+  width: 280px !important;
+  min-width: 280px !important;
+}
 
 .flatpickr-calendar .flatpickr-prev-month,
 .flatpickr-calendar .flatpickr-next-month {

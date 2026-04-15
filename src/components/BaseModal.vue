@@ -124,6 +124,9 @@ const chartOptions = computed(() => ({
   targetLabel: props.modalConfig.targetLabel || '年度目标',
   actualLabel: props.modalConfig.actualLabel || '实际完成',
   lastYearLabel: props.modalConfig.lastYearLabel || '上一年同期完成',
+  showBarAnnotations: true,
+  showYoYGrowth: true,
+  useDepartmentBarStyle: true,
 }))
 
 const close = () => emit('update:modelValue', false)

@@ -213,7 +213,14 @@
                       </svg>
                     </span>
                     <h3 class="text-base font-bold tracking-wide truncate">{{ getTooltipLabel(detailModal.type) }}详情</h3>
-                    <span class="px-2.5 py-1 rounded-full bg-white/18 border border-white/25 text-xs text-white/90 whitespace-nowrap">共 {{ modalIssues.length }} 条</span>
+                    <span class="px-2.5 py-1 rounded-full bg-white/18 border border-white/25 text-xs text-white/90 whitespace-nowrap flex items-center gap-1.5">
+                      <span>共 {{ modalIssues.length }} 条</span>
+                      <template v-if="rawData?.meta?.current_month">
+                        <span class="opacity-40">·</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-75" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>截至 {{ rawData.meta.current_month }}</span>
+                      </template>
+                    </span>
                   </div>
                 </div>
                 <button
@@ -241,67 +248,143 @@
                     <div class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-current/10 blur-2xl"></div>
 
                     <div class="flex items-start justify-between gap-3 mb-3">
-                      <div class="min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <span class="text-[11px] px-2 py-0.5 rounded-full border border-current/30 bg-white/70 dark:bg-slate-900/40">#{{ idx + 1 }}</span>
-                          <h4 class="text-base font-bold text-gray-800 dark:text-gray-100">{{ item.org_name }}</h4>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 mb-1.5">
+                          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/50 border border-current/25 text-current/70 tracking-widest uppercase select-none">#{{ idx + 1 }}</span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold tracking-wide border" :class="getOrgTypeBadgeClass(item.org_type, detailModal.type)">{{ getOrgTypeLabel(item.org_type) }}</span>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">{{ item.metric }}</p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h4 class="text-base font-extrabold bg-clip-text text-transparent leading-snug shrink-0" :class="getOrgNameGradient(detailModal.type)">{{ item.org_name }}</h4>
+                          <div class="flex items-center gap-1 min-w-0">
+                            <span class="inline-block w-1 h-3 rounded-full opacity-60 shrink-0" :class="getOrgNameAccent(detailModal.type)"></span>
+                            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">{{ item.metric }}</p>
+                          </div>
+                        </div>
                       </div>
                       <span class="text-xs px-2.5 py-1 rounded-full border bg-white/85 dark:bg-slate-900/45 shadow-sm whitespace-nowrap" :class="getMetricChipClass(detailModal.type)">
                         {{ getIssueMainValue(item, detailModal.type) }}
                       </span>
                     </div>
 
-                    <div v-if="detailModal.type === 'decline'" class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-                      <div class="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">去年同期</div>
-                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.last_year_value) }}</div>
+                    <div v-if="detailModal.type === 'decline'" class="space-y-2.5">
+                      <div class="rounded-xl border border-orange-200/70 dark:border-orange-900/35 bg-gradient-to-r from-orange-50/75 via-white to-amber-50/75 dark:from-orange-950/30 dark:via-slate-900/50 dark:to-amber-950/30 p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                          <span class="text-gray-500 dark:text-gray-400">同一标尺对比（去年 vs 今年）</span>
+                          <span class="font-semibold text-orange-600 dark:text-orange-300">今年 / 去年: {{ getDeclineCurrentPercent(item) }}%</span>
                         </div>
-                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">本期数值</div>
-                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
-                        </div>
-                      </div>
-                      <div class="sm:col-span-2 rounded-xl border border-orange-200/80 dark:border-orange-900/40 bg-gradient-to-br from-orange-50/90 to-amber-50/85 dark:from-orange-900/25 dark:to-amber-900/20 p-3 flex flex-col justify-center items-center text-center">
-                        <div class="text-[11px] uppercase tracking-[0.1em] text-orange-500 dark:text-orange-300">下降幅度</div>
-                        <div class="mt-1 text-2xl font-extrabold text-orange-600 dark:text-orange-300 leading-none">{{ item.decline_percent }}</div>
-                        <div class="mt-1 text-[11px] text-orange-500/80 dark:text-orange-300/75">同比预警</div>
-                      </div>
-                    </div>
 
-                    <div v-else-if="detailModal.type === 'behind'" class="grid grid-cols-1 sm:grid-cols-6 gap-2.5">
-                      <div class="sm:col-span-2 rounded-xl border border-red-200/80 dark:border-red-900/40 bg-gradient-to-b from-red-50/90 to-rose-50/85 dark:from-red-900/25 dark:to-rose-900/20 p-3 flex flex-col justify-center items-center text-center">
-                        <div class="text-[11px] uppercase tracking-[0.1em] text-red-500 dark:text-red-300">完成率</div>
-                        <div class="mt-1 text-2xl font-extrabold text-red-600 dark:text-red-300 leading-none">{{ item.completion_rate }}</div>
-                        <div class="mt-1 text-[11px] text-red-500/80 dark:text-red-300/75">进度滞后</div>
-                      </div>
-                      <div class="sm:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">目标值</div>
-                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.expected_min) }}</div>
+                        <div class="h-5 rounded-full bg-orange-100/90 dark:bg-orange-950/45 overflow-hidden relative">
+                          <div
+                            class="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-400/95"
+                            :style="{ width: getDeclineBaselinePercent(item) + '%' }"
+                          ></div>
+                          <div
+                            class="absolute left-0 top-[3px] h-[calc(100%-6px)] rounded-full bg-gradient-to-r from-orange-500 to-rose-500"
+                            :style="{ width: getDeclineCurrentPercent(item) + '%' }"
+                          ></div>
                         </div>
-                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">完成值</div>
-                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.current_value) }}</div>
-                        </div>
-                        <div class="rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                          <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">缺口</div>
-                          <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ formatNumber(item.gap_amount) }}</div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          <div class="rounded-lg border border-orange-100/80 dark:border-orange-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">去年基准</span>
+                            <span class="font-semibold text-amber-600 dark:text-amber-300">{{ formatNumber(item.last_year_value) }} / 100%</span>
+                          </div>
+                          <div class="rounded-lg border border-orange-100/80 dark:border-orange-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">今年完成</span>
+                            <span class="font-semibold text-orange-600 dark:text-orange-300">{{ formatNumber(item.current_value) }} / {{ getDeclineCurrentPercent(item) }}%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div v-else class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
-                      <div class="sm:col-span-3 rounded-xl border border-gray-200/80 dark:border-gray-700 p-3 bg-white/75 dark:bg-slate-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                        <div class="text-[11px] uppercase tracking-[0.08em] text-gray-500">利润类型</div>
-                        <div class="text-base font-semibold text-gray-800 dark:text-gray-100 mt-1">{{ item.org_type === 'department' ? '当前部门利润' : '当前企业利润总额' }}</div>
+                    <div v-else-if="detailModal.type === 'behind'" class="space-y-2.5">
+                      <div class="rounded-xl border border-red-200/70 dark:border-red-900/35 bg-gradient-to-r from-red-50/70 via-white to-rose-50/70 dark:from-red-950/30 dark:via-slate-900/50 dark:to-rose-950/30 p-3.5 space-y-3">
+                        <!-- 图例行 -->
+                        <div class="flex items-center justify-between text-[11px]">
+                          <span class="text-gray-500 dark:text-gray-400 font-medium">年度计划完成进度</span>
+                          <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-1.5">
+                              <span class="inline-block w-4 h-2 rounded-sm" :class="getBehindCurrentPercent(item) >= getBehindSeqPercent() ? 'bg-gradient-to-r from-emerald-400 to-green-500' : 'bg-gradient-to-r from-red-500 to-rose-500'"></span>
+                              <span class="text-gray-500 dark:text-gray-400">当前 {{ getBehindCurrentPercent(item) }}%</span>
+                            </span>
+                            <span class="flex items-center gap-1">
+                              <span class="inline-block w-0.5 h-3 rounded bg-amber-500"></span>
+                              <span class="text-gray-500 dark:text-gray-400">时序目标 {{ getBehindSeqPercent() }}%</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- 进度条（整体 = 年度计划）-->
+                        <div class="relative pt-5">
+                          <div class="h-5 rounded-full bg-red-100/90 dark:bg-red-950/45 relative">
+                            <!-- 当前完成段 -->
+                            <div
+                              class="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                              :class="getBehindCurrentPercent(item) >= getBehindSeqPercent() ? 'bg-gradient-to-r from-emerald-400 to-green-500' : 'bg-gradient-to-r from-red-500 via-rose-500 to-amber-500'"
+                              :style="{ width: Math.min(getBehindCurrentPercent(item), 100) + '%' }"
+                            >
+                              <span v-if="getBehindCurrentPercent(item) >= 22" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/95 font-semibold">{{ getBehindCurrentPercent(item) }}%</span>
+                            </div>
+                            <!-- 时序计划目标标记线 -->
+                            <div
+                              class="absolute top-0 h-full w-0.5 bg-amber-500 dark:bg-amber-400 z-10 rounded-full"
+                              :style="{ left: 'calc(' + getBehindSeqPercent() + '% - 1px)' }"
+                            >
+                              <div class="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/70 px-1 rounded">时序目标</div>
+                            </div>
+                          </div>
+                          <div class="flex justify-between mt-1.5 text-[10px] text-gray-400 dark:text-gray-500">
+                            <span>0</span>
+                            <span>年度计划 100%</span>
+                          </div>
+                        </div>
+
+                        <!-- 三列数值 -->
+                        <div class="grid grid-cols-3 gap-2 text-[11px]">
+                          <div class="rounded-lg border border-gray-100/80 dark:border-gray-700/50 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 text-center">
+                            <div class="text-gray-400 dark:text-gray-500 mb-0.5">年度计划</div>
+                            <div class="font-semibold text-gray-700 dark:text-gray-200">{{ formatNumber(getBehindAnnualTarget(item)) }}</div>
+                          </div>
+                          <div class="rounded-lg border border-amber-100/80 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 px-2.5 py-1.5 text-center">
+                            <div class="text-amber-500 dark:text-amber-400 mb-0.5">时序目标</div>
+                            <div class="font-semibold text-amber-600 dark:text-amber-300">{{ formatNumber(item.expected_min) }}</div>
+                          </div>
+                          <div class="rounded-lg border border-red-100/80 dark:border-red-900/40 bg-red-50/70 dark:bg-red-950/20 px-2.5 py-1.5 text-center">
+                            <div class="text-red-500 dark:text-red-400 mb-0.5">当前完成</div>
+                            <div class="font-semibold text-red-600 dark:text-red-300">{{ formatNumber(item.current_value) }}</div>
+                          </div>
+                        </div>
                       </div>
-                      <div class="sm:col-span-2 rounded-xl border border-purple-200/80 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/90 to-fuchsia-50/85 dark:from-purple-900/25 dark:to-fuchsia-900/20 p-3 flex flex-col justify-center items-center text-center">
-                        <div class="text-[11px] uppercase tracking-[0.1em] text-purple-500 dark:text-purple-300">利润值</div>
-                        <div class="mt-1 text-2xl font-extrabold text-purple-700 dark:text-purple-300 leading-none">{{ formatNumber(item.profit_value) }}</div>
-                        <div class="mt-1 text-[11px] text-purple-500/80 dark:text-purple-300/75">低于盈亏平衡点</div>
+                    </div>
+
+                    <div v-else class="space-y-2.5">
+                      <div class="rounded-xl border border-purple-200/70 dark:border-purple-900/35 bg-gradient-to-r from-purple-50/75 via-white to-fuchsia-50/75 dark:from-purple-950/35 dark:via-slate-900/50 dark:to-fuchsia-950/30 p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                          <span class="text-gray-500 dark:text-gray-400">亏损强度（同类相对）</span>
+                          <span class="font-semibold text-purple-600 dark:text-purple-300">{{ getNegativeLossSeverityPercent(item) }}%</span>
+                        </div>
+
+                        <div class="h-5 rounded-full bg-purple-100/90 dark:bg-purple-950/45 overflow-hidden relative">
+                          <div
+                            class="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-all duration-500"
+                            :style="{ width: getNegativeLossSeverityPercent(item) + '%' }"
+                          ></div>
+                          <div class="absolute inset-0 flex items-center justify-between px-2.5 text-[10px] text-purple-700/80 dark:text-purple-200/85 font-semibold pointer-events-none">
+                            <span>盈亏线 0</span>
+                            <span>较重亏损</span>
+                          </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          <div class="rounded-lg border border-purple-100/80 dark:border-purple-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">当前亏损值</span>
+                            <span class="font-semibold text-purple-600 dark:text-purple-300">{{ formatNumber(item.profit_value) }}</span>
+                          </div>
+                          <div class="rounded-lg border border-purple-100/80 dark:border-purple-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">同类最重亏损</span>
+                            <span class="font-semibold text-fuchsia-600 dark:text-fuchsia-300">{{ formatNumber(getNegativeWorstLossValue(item.org_type)) }}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -466,12 +549,156 @@ export default {
       return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-700'
     }
 
+    const getOrgTypeLabel = (orgType) => {
+      if (orgType === 'company') return '公司整体'
+      if (orgType === 'department_total') return '公司本部'
+      if (orgType === 'department') return '部门'
+      if (orgType === 'unit') return '所属企业'
+      return orgType || ''
+    }
+
+    const getOrgTypeBadgeClass = (orgType, modalType) => {
+      const colorMap = {
+        decline: {
+          company: 'bg-orange-100/80 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/50',
+          department_total: 'bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/50',
+          department: 'bg-yellow-100/80 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800/50',
+          unit: 'bg-orange-50/80 text-orange-600 border-orange-100 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/40',
+        },
+        behind: {
+          company: 'bg-red-100/80 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/50',
+          department_total: 'bg-rose-100/80 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800/50',
+          department: 'bg-pink-100/80 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800/50',
+          unit: 'bg-red-50/80 text-red-600 border-red-100 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/40',
+        },
+        negative: {
+          company: 'bg-purple-100/80 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50',
+          department_total: 'bg-fuchsia-100/80 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 dark:border-fuchsia-800/50',
+          department: 'bg-violet-100/80 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800/50',
+          unit: 'bg-purple-50/80 text-purple-600 border-purple-100 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-900/40',
+        },
+      }
+      return colorMap[modalType]?.[orgType] || 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+    }
+
+    const getOrgNameGradient = (type) => {
+      if (type === 'decline') return 'bg-gradient-to-r from-orange-600 via-amber-500 to-orange-700 dark:from-orange-300 dark:via-amber-300 dark:to-orange-200'
+      if (type === 'behind') return 'bg-gradient-to-r from-red-600 via-rose-500 to-red-700 dark:from-red-300 dark:via-rose-300 dark:to-red-200'
+      if (type === 'negative') return 'bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-700 dark:from-purple-300 dark:via-fuchsia-300 dark:to-purple-200'
+      return 'bg-gradient-to-r from-gray-700 to-gray-500 dark:from-gray-200 dark:to-gray-400'
+    }
+
+    const getOrgNameAccent = (type) => {
+      if (type === 'decline') return 'bg-amber-500'
+      if (type === 'behind') return 'bg-rose-500'
+      if (type === 'negative') return 'bg-fuchsia-500'
+      return 'bg-gray-400'
+    }
+
     const getIssueMainValue = (issue, type) => {
       if (!issue) return '--'
-      if (type === 'decline') return issue.decline_percent || '--'
-      if (type === 'behind') return issue.completion_rate || '--'
-      if (type === 'negative') return issue.profit_formatted || formatNumber(issue.profit_value)
+      if (type === 'decline') return "同比下降"+issue.decline_percent || '--'
+      if (type === 'behind') return "完成率"+issue.completion_rate || '--'
+      if (type === 'negative') return issue.profit_formatted+"万元" || formatNumber(issue.profit_value)
       return '--'
+    }
+
+    const parsePercent = (value) => {
+      if (value === null || value === undefined) return 0
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+      const text = String(value).trim()
+      if (!text) return 0
+      const parsed = parseFloat(text.replace('%', ''))
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
+    const toNumber = (value) => {
+      if (value === null || value === undefined) return 0
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+      const parsed = parseFloat(String(value).replace(/[,%\s万元]/g, ''))
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
+    const clampPercent = (value) => {
+      const safe = Number.isFinite(value) ? value : 0
+      return Math.max(0, Math.min(100, safe))
+    }
+
+    const getBehindProgressPercent = (issue) => {
+      if (!issue) return 0
+      const completionRate = parsePercent(issue.completion_rate)
+      if (completionRate > 0) return clampPercent(completionRate)
+
+      const target = parseFloat(issue.expected_min)
+      const current = parseFloat(issue.current_value)
+      if (!Number.isFinite(target) || target <= 0 || !Number.isFinite(current)) return 0
+      return clampPercent((current / target) * 100)
+    }
+
+    const getBehindGapPercent = (issue) => {
+      const progress = getBehindProgressPercent(issue)
+      return clampPercent(100 - progress)
+    }
+
+    const getBehindSeqRatio = () => {
+      if (!rawData.value?.meta?.seasonal_plan_ratio) return 0
+      const str = String(rawData.value.meta.seasonal_plan_ratio)
+      const parsed = parseFloat(str.replace('%', '')) / 100
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
+    const getBehindAnnualTarget = (issue) => {
+      if (!issue) return 0
+      const seqTarget = toNumber(issue.expected_min)
+      const seqRatio = getBehindSeqRatio()
+      if (seqRatio <= 0) return seqTarget
+      return seqTarget / seqRatio
+    }
+
+    const getBehindSeqPercent = () => {
+      return Math.round(getBehindSeqRatio() * 1000) / 10
+    }
+
+    const getBehindCurrentPercent = (issue) => {
+      if (!issue) return 0
+      const completionRate = parsePercent(issue.completion_rate)
+      if (completionRate > 0) return Math.round(clampPercent(completionRate) * 10) / 10
+      const annual = getBehindAnnualTarget(issue)
+      if (annual <= 0) return 0
+      return Math.round(clampPercent((toNumber(issue.current_value) / annual) * 100) * 10) / 10
+    }
+
+    const getDeclineCurrentPercent = (issue) => {
+      if (!issue) return 0
+      const lastYear = Math.max(0, toNumber(issue.last_year_value))
+      const current = Math.max(0, toNumber(issue.current_value))
+      const baseline = Math.max(lastYear, 1)
+      return clampPercent((current / baseline) * 100).toFixed(2)
+    }
+
+    const getDeclineBaselinePercent = (issue) => {
+      if (!issue) return 100
+      const lastYear = Math.max(0, toNumber(issue.last_year_value))
+      return lastYear > 0 ? 100 : 0
+    }
+
+    const getNegativeWorstLossValue = (orgType) => {
+      if (!negativeIssues.value.length) return 0
+      let worst = 0
+      negativeIssues.value.forEach((issue) => {
+        if (orgType && issue.org_type !== orgType) return
+        const profit = toNumber(issue.profit_value)
+        if (profit < worst) worst = profit
+      })
+      return worst
+    }
+
+    const getNegativeLossSeverityPercent = (issue) => {
+      if (!issue) return '0.00'
+      const currentLoss = Math.abs(Math.min(0, toNumber(issue.profit_value)))
+      const worstLoss = Math.abs(Math.min(0, getNegativeWorstLossValue(issue.org_type)))
+      if (worstLoss <= 0) return '0.00'
+      return clampPercent((currentLoss / worstLoss) * 100).toFixed(2)
     }
 
     const declineIssues = computed(() => {
@@ -482,7 +709,10 @@ export default {
       for (const level of levels) {
         const list = rawData.value.issues.yoy_decline[level] || []
         list.forEach((item) => {
-          issues.push({ ...item, type: 'decline', org_type: item.org_type })
+          if (level === 'unit' && item.org_id === 2) return
+          const orgType = level === 'department_total' ? 'department_total' : item.org_type
+          const orgName = level === 'department_total' ? '公司本部' : item.org_name
+          issues.push({ ...item, type: 'decline', org_type: orgType, org_name: orgName })
         })
       }
       return issues.sort((a, b) => {
@@ -500,7 +730,10 @@ export default {
       for (const level of levels) {
         const list = rawData.value.issues.behind_schedule[level] || []
         list.forEach((item) => {
-          issues.push({ ...item, type: 'behind', org_type: item.org_type })
+          if (level === 'unit' && item.org_id === 2) return
+          const orgType = level === 'department_total' ? 'department_total' : item.org_type
+          const orgName = level === 'department_total' ? '公司本部' : item.org_name
+          issues.push({ ...item, type: 'behind', org_type: orgType, org_name: orgName })
         })
       }
       return issues.sort((a, b) => {
@@ -518,7 +751,10 @@ export default {
       for (const level of levels) {
         const list = rawData.value.issues.negative_profit[level] || []
         list.forEach((item) => {
-          issues.push({ ...item, type: 'negative', org_type: item.org_type })
+          if (level === 'unit' && item.org_id === 2) return
+          const orgType = level === 'department_total' ? 'department_total' : item.org_type
+          const orgName = level === 'department_total' ? '公司本部' : item.org_name
+          issues.push({ ...item, type: 'negative', org_type: orgType, org_name: orgName })
         })
       }
       return issues.sort((a, b) => {
@@ -553,13 +789,8 @@ export default {
     }
 
     const initData = async () => {
-      const candidates = [
-        `${API_BASE_URL}/performance-analysis/issues`,
-        `${API_BASE_URL}/detailed-performance-issues`,
-      ]
-
+      const url =  `${API_BASE_URL}/performance-analysis/issues`
       let lastError = null
-      for (const url of candidates) {
         try {
           const response = await fetch(url)
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
@@ -570,7 +801,6 @@ export default {
         } catch (error) {
           lastError = error
         }
-      }
 
       console.error('获取预警信息失败:', lastError)
     }
@@ -595,6 +825,7 @@ export default {
     })
 
     return {
+      rawData,
       declineIssues,
       behindIssues,
       negativeIssues,
@@ -616,6 +847,19 @@ export default {
       getModalHeaderClass,
       getMetricChipClass,
       getIssueMainValue,
+      getOrgTypeLabel,
+      getOrgTypeBadgeClass,
+      getOrgNameGradient,
+      getOrgNameAccent,
+      getBehindProgressPercent,
+      getBehindGapPercent,
+      getBehindAnnualTarget,
+      getBehindSeqPercent,
+      getBehindCurrentPercent,
+      getDeclineCurrentPercent,
+      getDeclineBaselinePercent,
+      getNegativeWorstLossValue,
+      getNegativeLossSeverityPercent,
       handleEnter,
       handleLeave,
       getTooltipLabel,
