@@ -106,6 +106,31 @@ const resolvedActiveColor = computed(() => {
   return props.redColor
 })
 
+const withAlpha = (color, alpha) => {
+  const value = String(color || '').trim()
+  const rgbaMatch = value.match(/^rgba\(([^)]+)\)$/i)
+
+  if (rgbaMatch) {
+    const parts = rgbaMatch[1].split(',').map((item) => item.trim())
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+  }
+
+  const rgbMatch = value.match(/^rgb\(([^)]+)\)$/i)
+  if (rgbMatch) {
+    const parts = rgbMatch[1].split(',').map((item) => item.trim())
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+  }
+
+  if (/^#[0-9a-f]{6}$/i.test(value)) {
+    const r = parseInt(value.slice(1, 3), 16)
+    const g = parseInt(value.slice(3, 5), 16)
+    const b = parseInt(value.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
+  return value
+}
+
 const formatTarget = (value) => {
   const n = Number(value)
   if (Number.isNaN(n)) return value
@@ -167,7 +192,11 @@ const wrapStyle = computed(() => ({
   '--ring-value-size': `${Math.max(16, Math.min(36, (Number(props.size) || 220) * 0.22))}px`,
   '--ring-label-size': `${Math.max(10, Math.min(16, (Number(props.size) || 220) * 0.075))}px`,
   '--ring-active': resolvedActiveColor.value,
+  '--ring-active-soft': withAlpha(resolvedActiveColor.value, 0.18),
+  '--ring-active-glow': withAlpha(resolvedActiveColor.value, 0.38),
   '--ring-overflow': props.overflowColor,
+  '--ring-overflow-soft': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.16) : 'transparent',
+  '--ring-overflow-glow': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.34) : 'transparent',
   '--ring-inactive': props.inactiveColor,
 }))
 </script>
@@ -189,11 +218,29 @@ const wrapStyle = computed(() => ({
   width: var(--ring-size);
   height: var(--ring-size);
   border-radius: 9999px;
+  isolation: isolate;
+}
+
+.cyber-ring-core::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--ring-active-soft) 0%, transparent 54%),
+    radial-gradient(circle at 66% 34%, var(--ring-active-glow) 0%, transparent 28%),
+    radial-gradient(circle at 74% 76%, var(--ring-overflow-soft) 0%, transparent 26%);
+  filter: blur(16px) saturate(1.08);
+  opacity: 0.95;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .cyber-ring-svg {
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .cyber-tick {
@@ -205,7 +252,7 @@ const wrapStyle = computed(() => ({
 .cyber-tick.is-active {
   stroke: var(--ring-active);
   opacity: 1;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ring-active) 65%, transparent));
+  filter: drop-shadow(0 0 5px var(--ring-active-glow)) drop-shadow(0 0 10px var(--ring-active-soft));
 }
 
 .cyber-tick.is-inactive {
@@ -221,7 +268,7 @@ const wrapStyle = computed(() => ({
 .cyber-tick-overflow.is-overflow-active {
   stroke: var(--ring-overflow);
   opacity: 0.95;
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--ring-overflow) 72%, transparent));
+  filter: drop-shadow(0 0 6px var(--ring-overflow-glow)) drop-shadow(0 0 12px var(--ring-overflow-soft));
 }
 
 .cyber-tick-overflow.is-overflow-inactive {
@@ -238,6 +285,7 @@ const wrapStyle = computed(() => ({
   justify-content: center;
   pointer-events: none;
   transform: translateY(-2px);
+  z-index: 2;
 }
 
 .cyber-meta-outside {

@@ -40,6 +40,103 @@
           </div>
         </div>
 
+          <div v-if="feedbackStatus.message" class="feedback-status" :class="feedbackStatus.type">
+            {{ feedbackStatus.message }}
+          </div>
+
+          <div v-if="showStatsPanel" class="stats-panel">
+            <div class="stats-panel-header">
+              <h4 class="stats-panel-title">反馈与学习统计</h4>
+              <button @click="refreshMetrics" class="stats-refresh-btn" :disabled="metricsLoading">
+                {{ metricsLoading ? '刷新中...' : '刷新' }}
+              </button>
+            </div>
+            <div class="stats-grid">
+              <div class="stats-card accent-indigo">
+                <span class="stats-label">已学习模板</span>
+                <strong class="stats-value">{{ learningStats.total_templates || 0 }}</strong>
+                <span class="stats-meta">累计成功查询 {{ learningStats.success_queries || 0 }}</span>
+              </div>
+              <div class="stats-card accent-amber">
+                <span class="stats-label">总反馈数</span>
+                <strong class="stats-value">{{ feedbackMetrics.total_feedbacks || 0 }}</strong>
+                <span class="stats-meta">无帮助反馈 {{ feedbackMetrics.unhelpful_count || 0 }}</span>
+              </div>
+              <div class="stats-card accent-emerald">
+                <span class="stats-label">用户满意度</span>
+                <strong class="stats-value">{{ formatPercent(accuracyMetrics.user_satisfaction) }}</strong>
+                <div class="mini-meter">
+                  <span class="mini-meter-fill emerald" :style="barStyle(accuracyMetrics.user_satisfaction)"></span>
+                </div>
+              </div>
+              <div class="stats-card accent-rose">
+                <span class="stats-label">执行准确率</span>
+                <strong class="stats-value">{{ formatPercent(accuracyMetrics.execution_accuracy) }}</strong>
+                <div class="mini-meter">
+                  <span class="mini-meter-fill rose" :style="barStyle(accuracyMetrics.execution_accuracy)"></span>
+                </div>
+              </div>
+            </div>
+            <div class="stats-visuals">
+              <div class="visual-card">
+                <div class="visual-header">
+                  <p class="issues-title">反馈满意度结构</p>
+                  <span class="visual-caption">最近 7 天</span>
+                </div>
+                <div class="split-meter">
+                  <span class="split-meter-positive" :style="barStyle(feedbackMetrics.helpful_rate)"></span>
+                  <span class="split-meter-negative" :style="barStyle(100 - Number(feedbackMetrics.helpful_rate || 0))"></span>
+                </div>
+                <div class="split-meter-legend">
+                  <span><i class="legend-dot positive"></i>有帮助 {{ feedbackMetrics.helpful_count || 0 }}</span>
+                  <span><i class="legend-dot negative"></i>待改进 {{ feedbackMetrics.unhelpful_count || 0 }}</span>
+                </div>
+                <div class="stats-summary compact">
+                  <p>平均评分：{{ formatRating(feedbackMetrics.average_rating || accuracyMetrics.average_rating) }}</p>
+                  <p>满意率：{{ formatPercent(feedbackMetrics.helpful_rate) }}</p>
+                </div>
+              </div>
+              <div v-if="feedbackMetrics.top_issues && feedbackMetrics.top_issues.length" class="visual-card issues-list">
+                <div class="visual-header">
+                  <p class="issues-title">主要问题分布</p>
+                  <span class="visual-caption">按反馈量排序</span>
+                </div>
+                <div v-for="issue in feedbackMetrics.top_issues.slice(0, 4)" :key="issue.category" class="issue-bar-row">
+                  <div class="issue-row-top">
+                    <span>{{ issue.label }}</span>
+                    <span>{{ issue.count }} 条 / {{ formatRating(issue.avg_rating) }}</span>
+                  </div>
+                  <div class="issue-bar-track">
+                    <span class="issue-bar-fill" :style="issueBarStyle(issue.count)"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="stats-summary">
+              <p>总查询：{{ accuracyMetrics.total_queries || 0 }}</p>
+              <p>成功查询：{{ accuracyMetrics.successful_queries || 0 }}</p>
+              <p>平均评分：{{ formatRating(feedbackMetrics.average_rating || accuracyMetrics.average_rating) }}</p>
+            </div>
+            <div class="insight-strip">
+              <div class="insight-chip">
+                <span class="insight-label">学习效率</span>
+                <strong>{{ learningStats.total_queries || 0 }}</strong>
+              </div>
+              <div class="insight-chip">
+                <span class="insight-label">满意反馈</span>
+                <strong>{{ feedbackMetrics.helpful_count || 0 }}</strong>
+              </div>
+              <div class="insight-chip">
+                <span class="insight-label">需优化项</span>
+                <strong>{{ feedbackMetrics.unhelpful_count || 0 }}</strong>
+              </div>
+              <div class="insight-chip">
+                <span class="insight-label">面板状态</span>
+                <strong>{{ metricsLoading ? '同步中' : '已更新' }}</strong>
+              </div>
+            </div>
+          </div>
+
         <!-- 消息列表 -->
         <div class="chatbot-messages" ref="messagesContainer">
           <!-- 欢迎界面 -->
@@ -142,7 +239,7 @@
                 <div class="flex items-center justify-between">
                   <div class="flex gap-2">
                     <button 
-                      @click="sendFeedback(msg.queryLogId, true, 5)" 
+                      @click="sendFeedback(msg.queryLogId, true, 5, null, null, msg.question || null, msg.generatedSql || null)" 
                       class="feedback-btn positive"
                       :disabled="msg.feedbackGiven"
                       title="有帮助">
@@ -209,7 +306,7 @@
     <div v-if="showFeedbackModal" class="modal-overlay" @click.self="closeFeedbackModal">
       <div class="modal-content">
         <h3 class="text-lg font-semibold mb-4">反馈与改进</h3>
-        <p class="text-sm text-gray-600 mb-3">问题：{{ currentFeedbackMsg?.content?.substring(0, 100) }}...</p>
+        <p class="text-sm text-gray-600 mb-3">问题：{{ currentFeedbackMsg?.question?.substring(0, 100) || '未记录原问题' }}...</p>
         
         <div class="mb-3">
           <label class="block text-sm font-medium mb-1">评分</label>
@@ -271,9 +368,15 @@ export default {
     const isLoading = ref(false)
     const messages = ref([])
     const currentQuestion = ref('')
+    const sessionId = ref('')
     const suggestions = ref([])
     const messagesContainer = ref(null)
     const learningStats = ref({ total_templates: 0, total_queries: 0, success_queries: 0, avg_rating: 0 })
+    const showStatsPanel = ref(false)
+    const metricsLoading = ref(false)
+    const accuracyMetrics = ref({ total_queries: 0, successful_queries: 0, execution_accuracy: 0, user_satisfaction: 0, average_rating: 0 })
+    const feedbackMetrics = ref({ total_feedbacks: 0, helpful_count: 0, unhelpful_count: 0, helpful_rate: 0, average_rating: 0, top_issues: [] })
+    const feedbackStatus = ref({ message: '', type: 'info' })
     
     // 反馈对话框相关
     const showFeedbackModal = ref(false)
@@ -297,14 +400,55 @@ export default {
       }
     }
 
+    const fetchAccuracyMetrics = async () => {
+      const response = await axios.get(`${API_BASE_URL}/chat/metrics/accuracy/`)
+      accuracyMetrics.value = response.data || accuracyMetrics.value
+    }
+
+    const fetchFeedbackMetrics = async () => {
+      const response = await axios.get(`${API_BASE_URL}/chat/metrics/feedback/`)
+      feedbackMetrics.value = response.data || feedbackMetrics.value
+    }
+
+    const refreshMetrics = async () => {
+      metricsLoading.value = true
+      try {
+        await Promise.all([
+          fetchLearningStats(),
+          fetchAccuracyMetrics(),
+          fetchFeedbackMetrics(),
+        ])
+      } catch (error) {
+        console.error('刷新反馈统计失败:', error)
+        setFeedbackStatus('统计刷新失败，请稍后重试', 'error')
+      } finally {
+        metricsLoading.value = false
+      }
+    }
+
+    const setFeedbackStatus = (message, type = 'info') => {
+      feedbackStatus.value = { message, type }
+      window.clearTimeout(setFeedbackStatus.timer)
+      setFeedbackStatus.timer = window.setTimeout(() => {
+        feedbackStatus.value = { message: '', type: 'info' }
+      }, 2500)
+    }
+
+    const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`
+    const formatRating = (value) => `${Number(value || 0).toFixed(1)}/5`
+    const barStyle = (value) => ({ width: `${Math.max(0, Math.min(Number(value || 0), 100))}%` })
+    const issueBarStyle = (count) => {
+      const issues = Array.isArray(feedbackMetrics.value.top_issues) ? feedbackMetrics.value.top_issues : []
+      const maxCount = issues.length ? Math.max(...issues.map(issue => Number(issue.count || 0)), 1) : 1
+      return { width: `${(Number(count || 0) / maxCount) * 100}%` }
+    }
+
     // 显示学习统计
     const showLearningStats = () => {
-      alert(`📊 学习统计\n\n` +
-        `已学习模板: ${learningStats.value.total_templates || 0}\n` +
-        `总查询次数: ${learningStats.value.total_queries || 0}\n` +
-        `成功查询: ${learningStats.value.success_queries || 0}\n` +
-        `平均评分: ${learningStats.value.avg_rating ? learningStats.value.avg_rating.toFixed(1) : 0}/5\n\n` +
-        `💡 每次成功查询都会被学习，相似问题会直接从记忆库回复`)
+      showStatsPanel.value = !showStatsPanel.value
+      if (showStatsPanel.value) {
+        refreshMetrics()
+      }
     }
 
     // 获取建议问题
@@ -358,6 +502,28 @@ export default {
       const simpleMonth = text.match(/^(\d{1,2})月/) || text.match(/^(\d{1,2})\s*月/)
       if (simpleMonth) return `${parseInt(simpleMonth[1], 10)}月`
       return text
+    }
+
+    const getOrCreateSessionId = () => {
+      const storageKey = 'dashboard-chat-session-id'
+      try {
+        const existing = window.localStorage.getItem(storageKey)
+        if (existing) return existing
+        const created = `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+        window.localStorage.setItem(storageKey, created)
+        return created
+      } catch (error) {
+        return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+      }
+    }
+
+    const escapeHtml = (content) => {
+      return String(content)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
     }
 
     const normalizeChartConfig = (config) => {
@@ -466,7 +632,7 @@ export default {
     // 格式化消息
     const formatMessage = (content) => {
       if (!content) return ''
-      return content
+      return escapeHtml(content)
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>')
     }
@@ -496,7 +662,7 @@ export default {
         const response = await axios.post(`${API_BASE_URL}/chat/query/`, {
           question: question,
           context: context,
-          session_id: `session_${Date.now()}_${Math.random()}`
+          session_id: sessionId.value || getOrCreateSessionId()
         })
         
         const result = response.data
@@ -506,6 +672,8 @@ export default {
           const botMsg = {
             type: 'bot',
             content: result.answer,
+            question,
+            generatedSql: result.sql || null,
             chartData: normalizeChartConfig(result.chart_config),
             tableData: normalizeTableData(result.data),
             paginationInfo: result.chart_config?.pagination || null,
@@ -517,7 +685,6 @@ export default {
           messages.value.push(botMsg)
           // 初始化该消息的分页状态为第1页
           messagePaginationMap.set(messages.value.length - 1, 1)
-          console.log(result)
           // 更新学习统计
           if (result.learning_stats) {
             learningStats.value = result.learning_stats
@@ -544,14 +711,16 @@ export default {
     }
 
     // 发送反馈
-    const sendFeedback = async (queryLogId, isHelpful, rating, correctedSqlValue = null, comment = null) => {
+    const sendFeedback = async (queryLogId, isHelpful, rating, correctedSqlValue = null, comment = null, question = null, generatedSql = null) => {
       try {
         await axios.post(`${API_BASE_URL}/chat/feedback/`, {
           query_log_id: queryLogId,
           is_helpful: isHelpful,
           rating: rating,
           corrected_sql: correctedSqlValue,
-          comment: comment
+          comment: comment,
+          question: question,
+          generated_sql: generatedSql
         })
         
         // 标记消息已反馈
@@ -561,11 +730,13 @@ export default {
         }
         
         // 更新学习统计
-        await fetchLearningStats()
+        await refreshMetrics()
+        setFeedbackStatus('反馈提交成功，已进入学习队列', 'success')
         
         return true
       } catch (error) {
         console.error('发送反馈失败:', error)
+        setFeedbackStatus('反馈提交失败，请稍后重试', 'error')
         return false
       }
     }
@@ -588,14 +759,18 @@ export default {
     // 提交反馈
     const submitFeedback = async () => {
       if (currentFeedbackMsg.value) {
-        await sendFeedback(
+        const ok = await sendFeedback(
           currentFeedbackMsg.value.queryLogId,
           false,
           feedbackRating.value,
           correctedSql.value || null,
-          feedbackComment.value || null
+          feedbackComment.value || null,
+          currentFeedbackMsg.value.question || null,
+          currentFeedbackMsg.value.generatedSql || null
         )
-        closeFeedbackModal()
+        if (ok) {
+          closeFeedbackModal()
+        }
       }
     }
 
@@ -647,12 +822,13 @@ export default {
       isOpen.value = !isOpen.value
       if (isOpen.value && messages.value.length === 0) {
         fetchSuggestions()
-        fetchLearningStats()
+        refreshMetrics()
       }
     }
 
     onMounted(() => {
-      fetchLearningStats()
+      sessionId.value = getOrCreateSessionId()
+      refreshMetrics()
     })
 
     return {
@@ -660,9 +836,15 @@ export default {
       isLoading,
       messages,
       currentQuestion,
+      sessionId,
       suggestions,
       messagesContainer,
       learningStats,
+      showStatsPanel,
+      metricsLoading,
+      accuracyMetrics,
+      feedbackMetrics,
+      feedbackStatus,
       showFeedbackModal,
       currentFeedbackMsg,
       feedbackRating,
@@ -678,6 +860,11 @@ export default {
       closeFeedbackModal,
       submitFeedback,
       fetchLearningStats,
+      refreshMetrics,
+      formatPercent,
+      formatRating,
+      barStyle,
+      issueBarStyle,
       getCurrentPage,
       goToPage,
       getPaginatedTableData
@@ -759,6 +946,286 @@ export default {
 
 .stats-btn:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.feedback-status {
+  padding: 0.625rem 1rem;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.feedback-status.success {
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.feedback-status.error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.stats-panel {
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stats-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.stats-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.stats-refresh-btn {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.stats-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stats-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.96) 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+}
+
+.stats-card.accent-indigo::before {
+  background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.stats-card.accent-amber::before {
+  background: linear-gradient(180deg, #f59e0b 0%, #f97316 100%);
+}
+
+.stats-card.accent-emerald::before {
+  background: linear-gradient(180deg, #10b981 0%, #14b8a6 100%);
+}
+
+.stats-card.accent-rose::before {
+  background: linear-gradient(180deg, #f43f5e 0%, #fb7185 100%);
+}
+
+.stats-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.stats-value {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.stats-meta {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.mini-meter {
+  width: 100%;
+  height: 6px;
+  margin-top: 0.6rem;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mini-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.mini-meter-fill.emerald {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.mini-meter-fill.rose {
+  background: linear-gradient(90deg, #f43f5e 0%, #fb7185 100%);
+}
+
+.stats-visuals {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.visual-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem;
+}
+
+.visual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.visual-caption {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.split-meter {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.split-meter-positive,
+.split-meter-negative {
+  display: block;
+  height: 100%;
+}
+
+.split-meter-positive {
+  background: linear-gradient(90deg, #10b981 0%, #22c55e 100%);
+}
+
+.split-meter-negative {
+  background: linear-gradient(90deg, #f97316 0%, #ef4444 100%);
+}
+
+.split-meter-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.7rem;
+  font-size: 0.73rem;
+  color: #475569;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 0.35rem;
+}
+
+.legend-dot.positive {
+  background: #22c55e;
+}
+
+.legend-dot.negative {
+  background: #ef4444;
+}
+
+.stats-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.stats-summary.compact {
+  margin-top: 0.75rem;
+}
+
+.issues-list {
+  margin-top: 0.75rem;
+  background: white;
+}
+
+.issues-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.issue-bar-row {
+  margin-top: 0.65rem;
+}
+
+.issue-row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+.issue-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  overflow: hidden;
+}
+
+.issue-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.insight-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.insight-chip {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.insight-label {
+  font-size: 0.68rem;
+  color: #64748b;
 }
 
 .chatbot-messages {
@@ -1077,6 +1544,23 @@ export default {
 }
 
 @media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-visuals {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-summary {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
   .chatbot-dialog {
     width: 100vw;
     height: 100vh;
