@@ -91,7 +91,10 @@ const completionColors = (completion, month) => {
 const formatNumber = (value) => {
   const numeric = Number(value)
   if (!Number.isFinite(numeric)) return '-'
-  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 }).format(numeric)
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: 1,
+    useGrouping: false,
+  }).format(numeric)
 }
 
 const barAnnotationPlugin = {

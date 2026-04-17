@@ -6,10 +6,12 @@
       <div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent to-transparent" :class="headerTheme.energyLineClass"></div>
       <div class="flex items-center gap-2">
         <div class="h-8 w-8 rounded-lg flex items-center justify-center ring-1" :class="[iconClass, headerTheme.iconFrameClass]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3v18h18" />
-            <path d="m19 9-5 5-4-4-3 3" />
-          </svg>
+          <DotLottieVue
+            class="h-7 w-7"
+            autoplay
+            loop
+            :src="doodleLottieSrc"
+          />
         </div>
         <div>
           <h3 class="text-lg font-extrabold tracking-[0.03em] text-slate-800 dark:text-slate-100">{{ title }}</h3>
@@ -32,6 +34,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 import {
   Chart,
   LineController,
@@ -65,6 +68,7 @@ const props = defineProps({
 const emit = defineEmits(['point-click'])
 
 const canvasRef = ref(null)
+const doodleLottieSrc = '/lottie/doodle-motif-316-growth-hover-pinch.json'
 let chart = null
 
 const destroyChart = () => {

@@ -144,7 +144,10 @@ const close = () => {
 
 const formatNumber = (num) => {
   if (num == null || isNaN(num)) return '—'
-  return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2 }).format(num)
+  return new Intl.NumberFormat('zh-CN', {
+    minimumFractionDigits: 2,
+    useGrouping: false,
+  }).format(num)
 }
 
 const completionCal = (completion, month) => {

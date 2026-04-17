@@ -50,7 +50,7 @@ export default {
 
     const formatChineseAmount = (value) => {
       const numericValue = Number(value) || 0
-      return `${numericValue.toLocaleString('zh-CN')}万元`
+      return `${new Intl.NumberFormat('zh-CN', { useGrouping: false }).format(numericValue)}万元`
     }
 
     const formatTooltipMonth = (items) => {

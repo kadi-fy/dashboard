@@ -6,12 +6,12 @@
 			<div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent dark:via-cyan-300/60"></div>
 			<div class="flex items-center gap-2">
 				<div :class="iconClass" class="relative h-8 w-8 rounded-lg flex items-center justify-center ring-1 ring-cyan-300/40 dark:ring-cyan-400/30 shadow-[0_0_16px_rgba(34,211,238,0.25)] dark:shadow-[0_0_20px_rgba(56,189,248,0.18)]">
-					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<path  d="M4 20V10" />
-						<path  d="M10 20V4" />
-						<path  d="M16 20v-8" />
-						<path  d="M22 20v-5" />
-					</svg>
+					<DotLottieVue
+						class="h-7 w-7"
+						autoplay
+						loop
+						:src="barLottieSrc"
+					/>
 				</div>
 				<div class="relative">
 					<h3 class="text-lg font-extrabold tracking-[0.03em] text-slate-800 dark:text-slate-100">{{ title }}</h3>
@@ -42,6 +42,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 import {
 	Chart,
 	BarController,
@@ -81,6 +82,7 @@ const props = defineProps({
 const emit = defineEmits(['bar-click'])
 
 const canvasRef = ref(null)
+const barLottieSrc = '/lottie/wired-gradient-153-bar-chart-hover-pinch.json'
 let chart = null
 
 const destroyChart = () => {

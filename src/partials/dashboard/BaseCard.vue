@@ -18,25 +18,41 @@
       <div class="flex-shrink-0">
         <div
           v-if="showValueStatusBadge"
-          class="relative flex h-[100px] w-[100px] items-center justify-center rounded-2xl"
+          class="status-indicator-wrap"
         >
-          <span class="pointer-events-none absolute h-18 w-18 rounded-full blur-xl opacity-45" :class="statusGlowClass"></span>
-          <div
-            class="relative w-16 h-16 rounded-2xl border flex items-center justify-center overflow-hidden shadow-[0_14px_28px_rgba(15,23,42,0.14)]"
-            :class="statusBadgeClass"
-          >
-            <span class="absolute inset-[3px] rounded-[12px] metric-orb-animate" :class="statusOrbClass"></span>
-            <span class="absolute top-1 left-1 h-3 w-5 rounded-full bg-white/35 blur-[1px]"></span>
-            <svg v-if="statusTrend === 'up'" class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 1059 1024" fill="currentColor" aria-hidden="true">
-              <path d="M995.752 918.069H88.276V42.372C88.276 21.186 67.09 0 42.372 0S0 21.186 0 42.372v918.07c0 24.717 21.186 42.372 42.372 42.372h953.38c24.717 0 42.372-21.186 42.372-42.373s-17.655-42.372-42.372-42.372z"></path>
-              <path d="M275.42 716.8L512 480.22l123.586 123.587c17.655 17.655 45.904 17.655 63.559 0l278.952-278.952c17.655-17.655 17.655-45.903 0-63.558s-45.904-17.656-63.56 0L667.367 508.469 547.31 388.414c-3.53-3.531-3.53-3.531-7.062-3.531-17.655-17.655-45.903-17.655-63.558 0l-264.828 271.89c-17.655 17.655-17.655 45.903 0 63.558 17.655 14.124 45.904 14.124 63.559-3.531z"></path>
-            </svg>
-            <svg v-else-if="statusTrend === 'down'" class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 1024 1024" fill="currentColor" aria-hidden="true">
-              <path d="M880.512 570.154667L938.666667 512v170.666667h-170.666667l52.181333-52.181334-204.458666-204.458666-168.149334 84.053333L170.666667 278.826667 225.365333 213.333333l234.026667 195.413334 173.184-86.570667z"></path>
-              <path d="M128 853.333333h810.666667v85.333334H42.666667V128h85.333333z"></path>
-            </svg>
-            <svg v-else class="relative z-10 text-white" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 12h14" />
+          <DotLottieVue
+            v-if="statusTrend === 'up'"
+            class="status-lottie-positive"
+            autoplay
+            loop
+            :src="positiveLottieSrc"
+          />
+
+          <DotLottieVue
+            v-else-if="statusTrend === 'down'"
+            class="status-lottie-negative"
+            autoplay
+            loop
+            :src="negativeLottieSrc"
+          />
+
+          <div v-else class="status-symbol status-symbol--flat">
+            <svg
+              class="relative z-10"
+              xmlns="http://www.w3.org/2000/svg"
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5.5 12H18.5" />
+              <circle cx="8.2" cy="12" r="0.95" fill="currentColor" stroke="none" />
+              <circle cx="15.8" cy="12" r="0.95" fill="currentColor" stroke="none" />
             </svg>
           </div>
         </div>
@@ -80,6 +96,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 import CardLIneChart from '../../charts/CardLIneChart.vue'
 import CyberRingProgress from '../../charts/CyberRingProgress.vue'
 import BaseModal from '../../components/BaseModal.vue'
@@ -91,6 +108,7 @@ const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 6
 export default {
   name: 'BaseCard',
   components: { 
+    DotLottieVue,
     CardLIneChart, 
     CyberRingProgress,
     BaseModal 
@@ -230,7 +248,7 @@ export default {
       showTarget: config.value.hasTarget !== false,
       dataField: config.value.dataField,
       planField: config.value.planField,
-      chartType: props.modalChartType || 'bar',
+      chartType: props.modalChartType || (props.metricType === 'earning' ? 'line' : 'bar'),
     }));
 
     // 加载数据的核心函数
@@ -317,27 +335,8 @@ export default {
       return 'flat';
     });
 
-    const statusBadgeClass = computed(() => {
-      if (statusTrend.value === 'up') {
-        return 'border-emerald-200/80 dark:border-emerald-700/60 bg-emerald-50/60 dark:bg-emerald-900/20';
-      }
-      if (statusTrend.value === 'down') {
-        return 'border-rose-200/80 dark:border-rose-700/60 bg-rose-50/60 dark:bg-rose-900/20';
-      }
-      return 'border-slate-200/80 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-900/25';
-    });
-
-    const statusOrbClass = computed(() => {
-      if (statusTrend.value === 'up') return 'bg-gradient-to-br from-emerald-500 to-teal-500';
-      if (statusTrend.value === 'down') return 'bg-gradient-to-br from-rose-500 to-orange-500';
-      return 'bg-gradient-to-br from-slate-500 to-slate-400';
-    });
-
-    const statusGlowClass = computed(() => {
-      if (statusTrend.value === 'up') return 'bg-emerald-400/60 dark:bg-emerald-500/40';
-      if (statusTrend.value === 'down') return 'bg-rose-400/60 dark:bg-rose-500/40';
-      return 'bg-slate-300/70 dark:bg-slate-500/35';
-    });
+    const positiveLottieSrc = '/lottie/wired-gradient-3378-arrows-up-loop-cycle.json';
+    const negativeLottieSrc = '/lottie/wired-gradient-3379-arrows-down-loop-cycle.json';
 
     const mainValueClass = computed(() => {
       const shouldWarnNegative = ['earning', 'cash'].includes(props.metricType) && statusValue.value < 0;
@@ -409,9 +408,8 @@ export default {
       completionRate,
       showValueStatusBadge,
       statusTrend,
-      statusBadgeClass,
-      statusOrbClass,
-      statusGlowClass,
+      positiveLottieSrc,
+      negativeLottieSrc,
       mainValueClass,
       showLineChart,
       chartCurrentValues,
@@ -428,17 +426,59 @@ export default {
 </script>
 
 <style scoped>
-.metric-orb-animate {
-  animation: base-card-orb-float 3.2s ease-in-out infinite;
+.status-indicator-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 110px;
 }
 
-@keyframes base-card-orb-float {
-  0%,
-  100% {
-    transform: translateY(0);
+.status-lottie-positive {
+  width: 150px;
+  height: auto;
+  aspect-ratio: 13 / 6;
+  filter: drop-shadow(0 8px 16px rgba(8, 168, 138, 0.14));
+}
+
+.status-lottie-negative {
+  width: 150px;
+  height: auto;
+  aspect-ratio: 13 / 6;
+  filter: drop-shadow(0 8px 16px rgba(244, 63, 94, 0.14));
+}
+
+.status-symbol {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 9999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    0 12px 22px rgba(15, 23, 42, 0.14);
+}
+
+.status-symbol--down {
+  color: #ffffff;
+  background: linear-gradient(145deg, rgba(244,63,94,0.84), rgba(249,115,22,0.72));
+}
+
+.status-symbol--flat {
+  color: rgba(255,255,255,0.92);
+  background: linear-gradient(145deg, rgba(100,116,139,0.82), rgba(71,85,105,0.72));
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-lottie-positive {
+    filter: drop-shadow(0 0 18px rgba(8, 168, 138, 0.2));
   }
-  50% {
-    transform: translateY(-1.5px);
+
+  .status-lottie-negative {
+    filter: drop-shadow(0 0 18px rgba(244, 63, 94, 0.22));
   }
 }
 

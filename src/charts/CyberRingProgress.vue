@@ -30,7 +30,7 @@
       </svg>
 
       <div class="cyber-center">
-        <div class="cyber-value">
+        <div class="cyber-value" :style="valueStyle">
           <span class="cyber-value-number">{{ displayPercent }}</span>
           <span class="cyber-value-unit">%</span>
         </div>
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   value: { type: Number, default: 50.35 },
@@ -134,7 +134,10 @@ const withAlpha = (color, alpha) => {
 const formatTarget = (value) => {
   const n = Number(value)
   if (Number.isNaN(n)) return value
-  return Math.round(n).toLocaleString('zh-CN')
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: 0,
+    useGrouping: false,
+  }).format(Math.round(n))
 }
 
 const toRad = (deg) => deg * (Math.PI / 180)
@@ -199,6 +202,69 @@ const wrapStyle = computed(() => ({
   '--ring-overflow-glow': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.34) : 'transparent',
   '--ring-inactive': props.inactiveColor,
 }))
+
+const isDarkMode = ref(false)
+let darkObserver = null
+let darkMediaQuery = null
+
+const detectDarkMode = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+
+  const root = document.documentElement
+  const body = document.body
+  const rootDark = root?.classList?.contains('dark')
+  const bodyDark = body?.classList?.contains('dark')
+  const rootThemeDark = root?.getAttribute('data-theme') === 'dark' || root?.getAttribute('data-mode') === 'dark'
+  const bodyThemeDark = body?.getAttribute('data-theme') === 'dark' || body?.getAttribute('data-mode') === 'dark'
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+
+  isDarkMode.value = !!(rootDark || bodyDark || rootThemeDark || bodyThemeDark || prefersDark)
+}
+
+const valueStyle = computed(() => ({
+  color: isDarkMode.value ? '#ffffff' : '#1e293b',
+}))
+
+onMounted(() => {
+  detectDarkMode()
+
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    if (darkMediaQuery.addEventListener) {
+      darkMediaQuery.addEventListener('change', detectDarkMode)
+    } else if (darkMediaQuery.addListener) {
+      darkMediaQuery.addListener(detectDarkMode)
+    }
+  }
+
+  if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+    darkObserver = new MutationObserver(detectDarkMode)
+    const root = document.documentElement
+    const body = document.body
+    if (root) {
+      darkObserver.observe(root, { attributes: true, attributeFilter: ['class', 'data-theme', 'data-mode'] })
+    }
+    if (body) {
+      darkObserver.observe(body, { attributes: true, attributeFilter: ['class', 'data-theme', 'data-mode'] })
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  if (darkObserver) {
+    darkObserver.disconnect()
+    darkObserver = null
+  }
+
+  if (darkMediaQuery) {
+    if (darkMediaQuery.removeEventListener) {
+      darkMediaQuery.removeEventListener('change', detectDarkMode)
+    } else if (darkMediaQuery.removeListener) {
+      darkMediaQuery.removeListener(detectDarkMode)
+    }
+    darkMediaQuery = null
+  }
+})
 </script>
 
 <style scoped>
@@ -346,8 +412,25 @@ const wrapStyle = computed(() => ({
   stroke: rgba(148, 163, 184, 0.5);
 }
 
-:global(.dark) .cyber-value {
-  color: #f8fafc;
+:global(.dark) .cyber-value,
+:global(html.dark) .cyber-value,
+:global(body.dark) .cyber-value,
+:global([data-theme='dark']) .cyber-value,
+:global([data-mode='dark']) .cyber-value {
+  color: #f8fafc !important;
+}
+
+:global(.dark) .cyber-value-number,
+:global(html.dark) .cyber-value-number,
+:global(body.dark) .cyber-value-number,
+:global([data-theme='dark']) .cyber-value-number,
+:global([data-mode='dark']) .cyber-value-number,
+:global(.dark) .cyber-value-unit,
+:global(html.dark) .cyber-value-unit,
+:global(body.dark) .cyber-value-unit,
+:global([data-theme='dark']) .cyber-value-unit,
+:global([data-mode='dark']) .cyber-value-unit {
+  color: #ffffff !important;
 }
 
 :global(.dark) .cyber-label {
@@ -360,5 +443,11 @@ const wrapStyle = computed(() => ({
 
 :global(.dark) .cyber-meta-target {
   color: #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cyber-value-number {
+    color: #ffffff;
+  }
 }
 </style>

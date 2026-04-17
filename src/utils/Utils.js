@@ -1,14 +1,12 @@
-export const formatValue = (value) => Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumSignificantDigits: 3,
-  notation: 'compact',
-}).format(value);
+export const formatValue = (value) => Intl.NumberFormat('zh-CN', {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+}).format(Number(value) || 0);
 
-export const formatThousands = (value) => Intl.NumberFormat('en-US', {
-  maximumSignificantDigits: 3,
-  notation: 'compact',
-}).format(value);
+export const formatThousands = (value) => Intl.NumberFormat('zh-CN', {
+  maximumFractionDigits: 2,
+  useGrouping: false,
+}).format(Number(value) || 0);
 
 export const getCssVariable = (variable) => {
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();

@@ -94,7 +94,10 @@ export default {
       if (!Number.isFinite(Number(value))) return '--'
       const n = Number(value)
       if (unit === '%') return `${n.toFixed(2)}%`
-      return `${n.toLocaleString('zh-CN', { maximumFractionDigits: 2 })}${unit || ''}`
+      return `${new Intl.NumberFormat('zh-CN', {
+        maximumFractionDigits: 2,
+        useGrouping: false,
+      }).format(n)}${unit || ''}`
     }
 
     const options = computed(() => ({
