@@ -349,6 +349,7 @@ import DynamicChart from './DynamicChart.vue'
 import { GLOBAL_CONFIG } from '../utils/Utils'
 
 const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL;
+const QUERY_API_BASE_URL = `${API_BASE_URL}/query`
 
 export default {
   name: 'ChatBot',
@@ -391,7 +392,7 @@ export default {
     // 获取学习统计
     const fetchLearningStats = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/chat/learning-stats/`)
+        const response = await axios.get(`${QUERY_API_BASE_URL}/learning-stats/`)
         if (response.data.success) {
           learningStats.value = response.data.stats
         }
@@ -401,12 +402,12 @@ export default {
     }
 
     const fetchAccuracyMetrics = async () => {
-      const response = await axios.get(`${API_BASE_URL}/chat/metrics/accuracy/`)
+      const response = await axios.get(`${QUERY_API_BASE_URL}/metrics/accuracy/`)
       accuracyMetrics.value = response.data || accuracyMetrics.value
     }
 
     const fetchFeedbackMetrics = async () => {
-      const response = await axios.get(`${API_BASE_URL}/chat/metrics/feedback/`)
+      const response = await axios.get(`${QUERY_API_BASE_URL}/metrics/feedback/`)
       feedbackMetrics.value = response.data || feedbackMetrics.value
     }
 
@@ -454,7 +455,7 @@ export default {
     // 获取建议问题
     const fetchSuggestions = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/chat/suggestions/`)
+        const response = await axios.get(`${QUERY_API_BASE_URL}/suggestions/`)
         suggestions.value = response.data.suggestions
       } catch (error) {
         console.error('获取建议失败:', error)
@@ -498,7 +499,9 @@ export default {
       const digits = text.match(/^(\d{1,2})$/)
       if (digits) return `${parseInt(digits[1], 10)}月`
       const yearMonth = text.match(/^(\d{4})[-_/](\d{1,2})$/)
-      if (yearMonth) return `${parseInt(yearMonth[2], 10)}月`
+      if (yearMonth) return `${parseInt(yearMonth[1], 10)}年${parseInt(yearMonth[2], 10)}月`
+      const yearMonthWithSuffix = text.match(/^(\d{4})-(\d{1,2})月$/)
+      if (yearMonthWithSuffix) return `${parseInt(yearMonthWithSuffix[1], 10)}年${parseInt(yearMonthWithSuffix[2], 10)}月`
       const simpleMonth = text.match(/^(\d{1,2})月/) || text.match(/^(\d{1,2})\s*月/)
       if (simpleMonth) return `${parseInt(simpleMonth[1], 10)}月`
       return text
@@ -528,18 +531,10 @@ export default {
 
     const normalizeChartConfig = (config) => {
       if (!config) return null
-      
-      // 检测无效的图表配置
-      // 1. 只有一个标签且标签是纯数值
-      if (Array.isArray(config.labels) && config.labels.length === 1) {
-        const label = String(config.labels[0]).trim()
-        if (/^\d+(\.\d+)?$/.test(label)) {
-          return null
-        }
-      }
-      
-      // 2. 维度和指标相同（说明没有有效的维度分类）
-      if (config.dimension === config.metric) {
+
+      const hasSeries = Array.isArray(config.series) && config.series.length > 0
+      const hasData = Array.isArray(config.data) && config.data.length > 0
+      if (!hasSeries && !hasData) {
         return null
       }
       
@@ -659,7 +654,7 @@ export default {
           month: props.currentMonth
         }
         
-        const response = await axios.post(`${API_BASE_URL}/chat/query/`, {
+        const response = await axios.post(`${QUERY_API_BASE_URL}/query/`, {
           question: question,
           context: context,
           session_id: sessionId.value || getOrCreateSessionId()
@@ -713,7 +708,7 @@ export default {
     // 发送反馈
     const sendFeedback = async (queryLogId, isHelpful, rating, correctedSqlValue = null, comment = null, question = null, generatedSql = null) => {
       try {
-        await axios.post(`${API_BASE_URL}/chat/feedback/`, {
+        await axios.post(`${QUERY_API_BASE_URL}/feedback/`, {
           query_log_id: queryLogId,
           is_helpful: isHelpful,
           rating: rating,

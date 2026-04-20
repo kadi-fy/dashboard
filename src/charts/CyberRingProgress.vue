@@ -10,6 +10,7 @@
             :y1="tick.y1"
             :x2="tick.x2"
             :y2="tick.y2"
+            :style="tick.style"
             class="cyber-tick"
             :class="tick.active ? 'is-active' : 'is-inactive'"
           />
@@ -23,6 +24,7 @@
             :y1="tick.y1"
             :x2="tick.x2"
             :y2="tick.y2"
+            :style="tick.style"
             class="cyber-tick cyber-tick-overflow"
             :class="tick.active ? 'is-overflow-active' : 'is-overflow-inactive'"
           />
@@ -59,11 +61,11 @@ const props = defineProps({
   unit: { type: String, default: '万元' },
   size: { type: [Number, String], default: 220 },
   decimals: { type: Number, default: 0 },
-  tickCount: { type: Number, default: 48 },
-  innerRadius: { type: Number, default: 47 },
-  outerRadius: { type: Number, default: 52 },
-  overflowInnerRadius: { type: Number, default: 55 },
-  overflowOuterRadius: { type: Number, default: 59 },
+  tickCount: { type: Number, default: 36 },
+  innerRadius: { type: Number, default: 44 },
+  outerRadius: { type: Number, default: 53 },
+  overflowInnerRadius: { type: Number, default: 54 },
+  overflowOuterRadius: { type: Number, default: 61 },
   // Optional override. If empty, auto-color by timeline plan: red (<= plan*80%), yellow ((plan*80%, plan)), green (>= plan)
   activeColor: { type: String, default: '' },
   inactiveColor: { type: String, default: 'rgba(148, 163, 184, 0.35)' },
@@ -173,6 +175,7 @@ const ticks = computed(() => {
       x2,
       y2,
       active: i < activeTickCount.value,
+      style: { '--tick-delay': `${i * 72}ms` },
     }
   })
 })
@@ -197,6 +200,7 @@ const overflowTicks = computed(() => {
       x2,
       y2,
       active: i < overflowTickCount.value,
+      style: { '--tick-delay': `${i * 72}ms` },
     }
   })
 })
@@ -208,9 +212,11 @@ const wrapStyle = computed(() => ({
   '--ring-active': resolvedActiveColor.value,
   '--ring-active-soft': withAlpha(resolvedActiveColor.value, 0.18),
   '--ring-active-glow': withAlpha(resolvedActiveColor.value, 0.38),
+  '--ring-active-strong': withAlpha(resolvedActiveColor.value, 0.92),
   '--ring-overflow': props.overflowColor,
   '--ring-overflow-soft': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.16) : 'transparent',
   '--ring-overflow-glow': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.34) : 'transparent',
+  '--ring-overflow-strong': withAlpha(props.overflowColor, 0.92),
   '--ring-inactive': props.inactiveColor,
 }))
 
@@ -299,18 +305,7 @@ onBeforeUnmount(() => {
 }
 
 .cyber-ring-core::before {
-  content: '';
-  position: absolute;
-  inset: -12%;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle at 50% 50%, var(--ring-active-soft) 0%, transparent 54%),
-    radial-gradient(circle at 66% 34%, var(--ring-active-glow) 0%, transparent 28%),
-    radial-gradient(circle at 74% 76%, var(--ring-overflow-soft) 0%, transparent 26%);
-  filter: blur(16px) saturate(1.08);
-  opacity: 0.95;
-  z-index: 0;
-  pointer-events: none;
+  content: none;
 }
 
 .cyber-ring-svg {
@@ -322,14 +317,16 @@ onBeforeUnmount(() => {
 
 .cyber-tick {
   stroke-linecap: round;
-  stroke-width: 1.25;
-  transition: stroke 180ms ease, opacity 180ms ease;
+  stroke-width: 2.4;
+  transition: stroke 320ms ease, opacity 320ms ease, filter 320ms ease, stroke-width 320ms ease;
 }
 
 .cyber-tick.is-active {
   stroke: var(--ring-active);
-  opacity: 1;
-  filter: drop-shadow(0 0 5px var(--ring-active-glow)) drop-shadow(0 0 10px var(--ring-active-soft));
+  opacity: 0.84;
+  filter: none;
+  animation: tickSweep 3.8s ease-in-out infinite;
+  animation-delay: var(--tick-delay, 0ms);
 }
 
 .cyber-tick.is-inactive {
@@ -339,13 +336,15 @@ onBeforeUnmount(() => {
 
 .cyber-tick-overflow {
   stroke-linecap: round;
-  stroke-width: 1.15;
+  stroke-width: 2;
 }
 
 .cyber-tick-overflow.is-overflow-active {
   stroke: var(--ring-overflow);
-  opacity: 0.95;
-  filter: drop-shadow(0 0 6px var(--ring-overflow-glow)) drop-shadow(0 0 12px var(--ring-overflow-soft));
+  opacity: 0.84;
+  filter: none;
+  animation: tickSweepOverflow 3.8s ease-in-out infinite;
+  animation-delay: var(--tick-delay, 0ms);
 }
 
 .cyber-tick-overflow.is-overflow-inactive {
@@ -459,6 +458,54 @@ onBeforeUnmount(() => {
 @media (prefers-color-scheme: dark) {
   .cyber-value-number {
     color: #ffffff;
+  }
+}
+
+@keyframes tickSweep {
+  0%,
+  100% {
+    opacity: 0.58;
+    stroke: var(--ring-active-soft);
+    stroke-width: 2.2;
+  }
+  30% {
+    opacity: 0.76;
+    stroke: var(--ring-active);
+    stroke-width: 2.45;
+  }
+  50% {
+    opacity: 0.96;
+    stroke: var(--ring-active-strong);
+    stroke-width: 2.9;
+  }
+  70% {
+    opacity: 0.8;
+    stroke: var(--ring-active);
+    stroke-width: 2.5;
+  }
+}
+
+@keyframes tickSweepOverflow {
+  0%,
+  100% {
+    opacity: 0.56;
+    stroke: var(--ring-overflow-soft);
+    stroke-width: 1.9;
+  }
+  30% {
+    opacity: 0.74;
+    stroke: var(--ring-overflow);
+    stroke-width: 2.1;
+  }
+  50% {
+    opacity: 0.95;
+    stroke: var(--ring-overflow-strong);
+    stroke-width: 2.45;
+  }
+  70% {
+    opacity: 0.8;
+    stroke: var(--ring-overflow);
+    stroke-width: 2.15;
   }
 }
 </style>

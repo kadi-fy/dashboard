@@ -17,7 +17,7 @@
       subtitle="DEPARTMENT SIGNED CONTRACTS"
       metric-type="contract"
       :selected-month="selectedMonth"
-      :rows="departmentRows"
+      :rows="contractDepartmentRows"
       actual-key="net_contract"
       plan-key="annual_plan_contract"
       :clickable="true"
@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import DepartmentCompletionCard from './DepartmentCompletionCard.vue'
 import DepartmentCostCard from './DepartmentCostCard.vue'
 import DepartmentProfitCard from './DepartmentProfitCard.vue'
@@ -128,6 +128,11 @@ const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL
 
 const departmentRows = ref([])
 const costRows = ref([])
+
+const contractDepartmentRows = computed(() => {
+  const list = Array.isArray(departmentRows.value) ? departmentRows.value : []
+  return list.filter((row) => Number(row?.org_id) !== 16)
+})
 
 const showMetricModal = ref(false)
 const departmentDetailRows = ref([])
