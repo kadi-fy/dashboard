@@ -179,6 +179,11 @@ const renderChart = () => {
 						if (!area) return '#6db8f5'
 						return buildGradient(context.chart.ctx, area, ['rgba(56, 189, 248, 0.92)', 'rgba(186, 230, 253, 0.96)'])
 					},
+					hoverBackgroundColor: (context) => {
+						const area = context.chart.chartArea
+						if (!area) return '#38bdf8'
+						return buildGradient(context.chart.ctx, area, ['rgba(14, 165, 233, 1)', 'rgba(125, 211, 252, 1)'])
+					},
 				},
 				{
 					label: '共摊成本',
@@ -194,6 +199,11 @@ const renderChart = () => {
 						if (!area) return '#f2c16f'
 						return buildGradient(context.chart.ctx, area, ['rgba(251, 191, 36, 0.9)', 'rgba(254, 243, 199, 0.96)'])
 					},
+					hoverBackgroundColor: (context) => {
+						const area = context.chart.chartArea
+						if (!area) return '#f59e0b'
+						return buildGradient(context.chart.ctx, area, ['rgba(217, 119, 6, 1)', 'rgba(252, 211, 77, 1)'])
+					},
 				},
 			],
 		},
@@ -207,6 +217,11 @@ const renderChart = () => {
 				if (!elements.length) return
 				const idx = elements[0].index
 				emit('bar-click', props.rows[idx])
+			},
+			onHover: (evt, elements) => {
+				const target = evt?.native?.target
+				if (!target) return
+				target.style.cursor = elements.length ? 'pointer' : 'default'
 			},
 			plugins: {
 				legend: { display: false },

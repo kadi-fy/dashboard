@@ -7,7 +7,7 @@
         <div class="absolute inset-0 boot-grid"></div>
         <div class="relative h-full w-full flex items-center justify-center p-6">
           <div class="w-full max-w-md rounded-3xl border border-white/30 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_30px_70px_rgba(15,23,42,0.35)] px-7 py-8">
-            <div class="text-xs tracking-[0.22em] font-semibold text-slate-500 dark:text-slate-300 mb-2">DASHBOARD INIT</div>
+            <div class="text-xs tracking-[0.22em] font-semibold text-slate-500 dark:text-slate-300 mb-2">电力规划设计总院</div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">正在初始化经营看板</div>
             <div class="text-sm text-slate-500 dark:text-slate-400 mb-5">{{ bootStatusText }}</div>
 

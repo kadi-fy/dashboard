@@ -60,6 +60,7 @@
           <CyberRingProgress
             :value="completionRate"
             :max="100"
+            :selected-month="selectedMonth"
             :size="94"
             :decimals="0"
             label="确保计划"

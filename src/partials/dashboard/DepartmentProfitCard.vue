@@ -165,6 +165,13 @@ const renderChart = () => {
 						if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(98, 194, 105, 0.95)', 'rgba(176, 227, 180, 0.95)'])
 						return buildGradient(context.chart.ctx, area, ['rgba(233, 102, 102, 0.95)', 'rgba(249, 173, 173, 0.95)'])
 					},
+					hoverBackgroundColor: (context) => {
+						const area = context.chart.chartArea
+						if (!area) return '#4ade80'
+						const v = toNum(profits[context.dataIndex])
+						if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(34, 197, 94, 1)', 'rgba(134, 239, 172, 1)'])
+						return buildGradient(context.chart.ctx, area, ['rgba(239, 68, 68, 1)', 'rgba(252, 165, 165, 1)'])
+					},
 				},
 			],
 		},
@@ -174,6 +181,11 @@ const renderChart = () => {
 				if (!elements.length) return
 				const idx = elements[0].index
 				emit('bar-click', props.rows[idx])
+			},
+			onHover: (evt, elements) => {
+				const target = evt?.native?.target
+				if (!target) return
+				target.style.cursor = elements.length ? 'pointer' : 'default'
 			},
 			plugins: {
 				legend: { display: false },

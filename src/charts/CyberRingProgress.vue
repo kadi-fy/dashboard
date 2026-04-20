@@ -51,6 +51,7 @@ import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 const props = defineProps({
   value: { type: Number, default: 50.35 },
   max: { type: Number, default: 100 },
+  selectedMonth: { type: Number, default: 12 },
   label: { type: String, default: '完成率' },
   showLabel: { type: Boolean, default: true },
   showTarget: { type: Boolean, default: false },
@@ -63,7 +64,7 @@ const props = defineProps({
   outerRadius: { type: Number, default: 52 },
   overflowInnerRadius: { type: Number, default: 55 },
   overflowOuterRadius: { type: Number, default: 59 },
-  // Optional override. If empty, auto-color by progress: red (<80), yellow (80-99), green (>=100)
+  // Optional override. If empty, auto-color by timeline plan: red (<= plan*80%), yellow ((plan*80%, plan)), green (>= plan)
   activeColor: { type: String, default: '' },
   inactiveColor: { type: String, default: 'rgba(148, 163, 184, 0.35)' },
   overflowColor: { type: String, default: 'rgba(196, 102, 255, 0.96)' },
@@ -99,10 +100,20 @@ const overflowTickCount = computed(() => {
   return Math.round((overflowPercent.value / 100) * props.tickCount)
 })
 
+const timelinePlanPercent = computed(() => {
+  const month = Number(props.selectedMonth)
+  if (Number.isFinite(month) && month > 0) {
+    const clampedMonth = Math.min(Math.max(month, 1), 12)
+    return (clampedMonth / 12) * 100
+  }
+  return 100
+})
+
 const resolvedActiveColor = computed(() => {
   if (props.activeColor) return props.activeColor
-  if (rawPercent.value >= 100) return props.greenColor
-  if (rawPercent.value >= 80) return props.yellowColor
+  const plan = timelinePlanPercent.value
+  if (rawPercent.value >= plan) return props.greenColor
+  if (rawPercent.value > plan * 0.8) return props.yellowColor
   return props.redColor
 })
 

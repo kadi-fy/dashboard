@@ -58,6 +58,7 @@ import { useDark } from '@vueuse/core'
 const props = defineProps({
   value: { type: Number, default: 0 },
   target: { type: Number, default: 100 },
+  selectedMonth: { type: Number, default: 12 },
   targetValue: { type: [Number, String], default: 0 },
   color: { type: Array, default: () => ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 67, 54, 0.7)'] },
   width: { type: [Number, String], default: 100 },
@@ -90,9 +91,21 @@ const overflowRadius = 51
 const baseCircumference = 2 * Math.PI * baseRadius
 const overflowCircumference = 2 * Math.PI * overflowRadius
 
+const timelinePlanPercent = computed(() => {
+  const month = Number(props.selectedMonth)
+  if (Number.isFinite(month) && month > 0) {
+    const clampedMonth = Math.min(Math.max(month, 1), 12)
+    return (clampedMonth / 12) * 100
+  }
+
+  const t = Number(props.target)
+  return Number.isFinite(t) && t > 0 ? t : 100
+})
+
 const gaugeColor = computed(() => {
-  if (safePercent.value >= 100) return props.color[0] || 'rgba(76, 175, 80, 0.7)'
-  if (safePercent.value >= 80) return props.color[1] || 'rgba(255, 193, 7, 0.7)'
+  const plan = timelinePlanPercent.value
+  if (safePercent.value >= plan) return props.color[0] || 'rgba(76, 175, 80, 0.7)'
+  if (safePercent.value > plan * 0.8) return props.color[1] || 'rgba(255, 193, 7, 0.7)'
   return props.color[2] || 'rgba(244, 67, 54, 0.7)'
 })
 

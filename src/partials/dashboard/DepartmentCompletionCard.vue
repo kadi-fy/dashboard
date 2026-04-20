@@ -139,6 +139,13 @@ const getCompletionColors = (completion, monthNumber) => {
 	return ['rgba(242, 127, 127, 0.95)', 'rgba(250, 192, 192, 0.95)']
 }
 
+const getCompletionHoverColors = (completion, monthNumber) => {
+	const expected = monthNumber / 12
+	if (completion >= expected) return ['rgba(74, 187, 102, 1)', 'rgba(153, 221, 168, 1)']
+	if (completion >= expected * 0.8) return ['rgba(219, 160, 35, 1)', 'rgba(242, 206, 120, 1)']
+	return ['rgba(226, 92, 92, 1)', 'rgba(244, 160, 160, 1)']
+}
+
 const getCompletionLabelTheme = (completion, monthNumber) => {
 	const expected = monthNumber / 12
 	if (completion >= expected) {
@@ -249,6 +256,13 @@ const renderChart = () => {
 						const colors = getCompletionColors(completion, props.selectedMonth)
 						return buildGradient(context.chart.ctx, area, colors)
 					},
+					hoverBackgroundColor: (context) => {
+						const area = context.chart.chartArea
+						if (!area) return '#74bf7f'
+						const completion = toNum(rates[context.dataIndex]) / 100
+						const colors = getCompletionHoverColors(completion, props.selectedMonth)
+						return buildGradient(context.chart.ctx, area, colors)
+					},
 				},
 			],
 		},
@@ -281,6 +295,11 @@ const renderChart = () => {
 				if (!props.clickable || !elements.length) return
 				const idx = elements[0].index
 				emit('bar-click', rows[idx])
+			},
+			onHover: (evt, elements) => {
+				const target = evt?.native?.target
+				if (!target) return
+				target.style.cursor = props.clickable && elements.length ? 'pointer' : 'default'
 			},
 		},
 		plugins: [completionLabelPlugin],

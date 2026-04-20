@@ -48,10 +48,10 @@ export default {
     }
 
     const chartData = computed(() => {
-      const len = Math.max(props.currentValues.length, props.lastyearValues.length)
-      if (!len) return null
+      // const len = Math.max(props.currentValues.length, props.lastyearValues.length)
+      // if (!len) return null
 
-      const labels = Array.from({ length: len }, (_, idx) => `${idx + 1}月`)
+      const labels = Array.from({ length: 12 }, (_, idx) => `${idx + 1}月`)
       return {
         labels,
         datasets: [
