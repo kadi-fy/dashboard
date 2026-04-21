@@ -143,8 +143,10 @@ const renderChart = () => {
     destroyChart()
     return
   }
-  destroyChart()
-  if (isEmpty.value) return
+  if (isEmpty.value) {
+    destroyChart()
+    return
+  }
 
   const labels = props.rows.map((r) => r.org_name)
   const values = props.rows.map((r) => toNum(r[props.metricKey]))
@@ -155,98 +157,114 @@ const renderChart = () => {
   const ctx = canvasEl.getContext('2d')
   if (!ctx) return
 
+  const datasets = [
+    {
+      label: props.primaryLabel || props.title,
+      data: values,
+      borderColor: props.primaryColor,
+      backgroundColor: 'rgba(37, 99, 235, 0.12)',
+      fill: true,
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: props.primaryColor,
+      pointBorderColor: props.primaryColor,
+      pointHoverBackgroundColor: props.primaryColor,
+      pointHoverBorderColor: props.primaryColor,
+      pointBorderWidth: 0,
+      tension: 0,
+    },
+    ...(props.secondaryMetricKey
+      ? [
+          {
+            label: props.secondaryLabel || '第二指标',
+            data: secondaryValues,
+            borderColor: props.secondaryColor,
+            backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            fill: false,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: props.secondaryColor,
+            pointBorderColor: props.secondaryColor,
+            pointHoverBackgroundColor: props.secondaryColor,
+            pointHoverBorderColor: props.secondaryColor,
+            pointBorderWidth: 0,
+            tension: 0,
+          },
+        ]
+      : []),
+  ]
+
+  const chartOptions = {
+    maintainAspectRatio: false,
+    animation: {
+      duration: 520,
+      easing: 'easeOutCubic',
+    },
+    plugins: {
+      legend: { display: !!props.secondaryMetricKey, position: 'top' },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (!props.secondaryMetricKey) {
+              return `${context.dataset.label}: ${formatMetricValue(context.parsed.y)}`
+            }
+
+            if (context.datasetIndex !== 0) return null
+
+            const idx = context.dataIndex
+            const primaryText = `${props.primaryLabel || props.title}: ${formatMetricValue(values[idx])}`
+            const secondaryText = `${props.secondaryLabel || '第二指标'}: ${formatMetricValue(secondaryValues[idx])}`
+            return `${primaryText} | ${secondaryText}`
+          },
+        },
+      },
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#eef2f7' },
+      },
+      x: {
+        ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
+        grid: { display: false },
+      },
+    },
+    onClick: (_evt, elements) => {
+      if (!elements.length) return
+      const idx = elements[0].index
+      emit('point-click', {
+        row: props.rows[idx],
+        metricType: props.metricType,
+        metricKey: props.secondaryMetricKey ? 'charge_contract_per' : props.metricKey,
+      })
+    },
+  }
+
+  if (chart) {
+    chart.data.labels = labels
+    chart.data.datasets = datasets
+    chart.options = chartOptions
+    chart.update('none')  // 屏外组件跳过渲染动画节省 CPU
+    return
+  }
+
   chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
-      datasets: [
-        {
-          label: props.primaryLabel || props.title,
-          data: values,
-          borderColor: props.primaryColor,
-          backgroundColor: 'rgba(37, 99, 235, 0.12)',
-          fill: true,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBackgroundColor: props.primaryColor,
-          pointBorderColor: props.primaryColor,
-          pointHoverBackgroundColor: props.primaryColor,
-          pointHoverBorderColor: props.primaryColor,
-          pointBorderWidth: 0,
-          tension: 0,
-        },
-        ...(props.secondaryMetricKey
-          ? [
-              {
-                label: props.secondaryLabel || '第二指标',
-                data: secondaryValues,
-                borderColor: props.secondaryColor,
-                backgroundColor: 'rgba(20, 184, 166, 0.1)',
-                fill: false,
-                borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 6,
-                pointBackgroundColor: props.secondaryColor,
-                pointBorderColor: props.secondaryColor,
-                pointHoverBackgroundColor: props.secondaryColor,
-                pointHoverBorderColor: props.secondaryColor,
-                pointBorderWidth: 0,
-                tension: 0,
-              },
-            ]
-          : []),
-      ],
+      datasets,
     },
-    options: {
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: !!props.secondaryMetricKey, position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              if (!props.secondaryMetricKey) {
-                return `${context.dataset.label}: ${formatMetricValue(context.parsed.y)}`
-              }
-
-              if (context.datasetIndex !== 0) return null
-
-              const idx = context.dataIndex
-              const primaryText = `${props.primaryLabel || props.title}: ${formatMetricValue(values[idx])}`
-              const secondaryText = `${props.secondaryLabel || '第二指标'}: ${formatMetricValue(secondaryValues[idx])}`
-              return `${primaryText} | ${secondaryText}`
-            },
-          },
-        },
-      },
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: '#eef2f7' },
-        },
-        x: {
-          ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
-          grid: { display: false },
-        },
-      },
-      onClick: (_evt, elements) => {
-        if (!elements.length) return
-        const idx = elements[0].index
-        emit('point-click', {
-          row: props.rows[idx],
-          metricType: props.metricType,
-          metricKey: props.secondaryMetricKey ? 'charge_contract_per' : props.metricKey,
-        })
-      },
-    },
+    options: chartOptions,
   })
 }
 
-watch(() => [props.rows, props.metricKey], () => renderChart(), { deep: true })
+watch(() => [props.rows, props.metricKey, props.secondaryMetricKey], () => renderChart(), { deep: false })
 
 onMounted(() => renderChart())
 onBeforeUnmount(() => destroyChart())

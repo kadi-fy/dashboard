@@ -59,7 +59,7 @@
       >
         <!-- 弹框主体 -->
         <div
-          class="relative w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-2xl"
+          class="modal-panel relative w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-2xl"
           @click.stop
         >
           <!-- 标题栏 -->
@@ -388,6 +388,28 @@ watch([() => props.selectedYear, () => props.selectedMonth], loadData)
 
 .metric-orb-animate {
   animation: orbPulse 3.2s ease-in-out infinite;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.26s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-panel,
+.modal-leave-active .modal-panel {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+
+.modal-enter-from .modal-panel,
+.modal-leave-to .modal-panel {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
 }
 
 @keyframes orbPulse {

@@ -150,8 +150,10 @@ const renderChart = () => {
 		destroyChart()
 		return
 	}
-	destroyChart()
-	if (isEmpty.value) return
+	if (isEmpty.value) {
+		destroyChart()
+		return
+	}
 
 	const labels = props.rows.map((r) => r.org_name)
 	const direct = props.rows.map((r) => toNum(r.direct_cost_adjusted))
@@ -160,121 +162,133 @@ const renderChart = () => {
 	const ctx = canvasEl.getContext('2d')
 	if (!ctx) return
 
+	const datasets = [
+		{
+			label: '直接成本',
+			data: direct,
+			stack: 'cost',
+			borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 },
+			borderSkipped: false,
+			categoryPercentage: 0.86,
+			barPercentage: 0.82,
+			maxBarThickness: 56,
+			backgroundColor: (context) => {
+				const area = context.chart.chartArea
+				if (!area) return '#6db8f5'
+				return buildGradient(context.chart.ctx, area, ['rgba(56, 189, 248, 0.92)', 'rgba(186, 230, 253, 0.96)'])
+			},
+			hoverBackgroundColor: (context) => {
+				const area = context.chart.chartArea
+				if (!area) return '#38bdf8'
+				return buildGradient(context.chart.ctx, area, ['rgba(14, 165, 233, 1)', 'rgba(125, 211, 252, 1)'])
+			},
+		},
+		{
+			label: '共摊成本',
+			data: shared,
+			stack: 'cost',
+			borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+			borderSkipped: false,
+			categoryPercentage: 0.86,
+			barPercentage: 0.82,
+			maxBarThickness: 56,
+			backgroundColor: (context) => {
+				const area = context.chart.chartArea
+				if (!area) return '#f2c16f'
+				return buildGradient(context.chart.ctx, area, ['rgba(251, 191, 36, 0.9)', 'rgba(254, 243, 199, 0.96)'])
+			},
+			hoverBackgroundColor: (context) => {
+				const area = context.chart.chartArea
+				if (!area) return '#f59e0b'
+				return buildGradient(context.chart.ctx, area, ['rgba(217, 119, 6, 1)', 'rgba(252, 211, 77, 1)'])
+			},
+		},
+	]
+
+	const chartOptions = {
+		maintainAspectRatio: false,
+		animation: {
+			duration: 650,
+			easing: 'easeOutCubic',
+		},
+		onClick: (_evt, elements) => {
+			if (!elements.length) return
+			const idx = elements[0].index
+			emit('bar-click', props.rows[idx])
+		},
+		onHover: (evt, elements) => {
+			const target = evt?.native?.target
+			if (!target) return
+			target.style.cursor = elements.length ? 'pointer' : 'default'
+		},
+		plugins: {
+			legend: { display: false },
+			tooltip: {
+				displayColors: true,
+				padding: 10,
+				backgroundColor: '#ffffff',
+				titleColor: '#334155',
+				bodyColor: '#334155',
+				borderColor: 'rgba(148, 163, 184, 0.35)',
+				borderWidth: 1,
+				titleFont: { weight: 600 },
+				callbacks: {
+					title: (items) => items?.[0]?.label || '',
+					label: (context) => `${context.dataset.label}: ${formatAmount(context.parsed.y)}万元`,
+					footer: (items) => {
+						const i = items?.[0]?.dataIndex
+						if (i == null) return ''
+						const total = toNum(direct[i]) + toNum(shared[i])
+						return `合计: ${formatAmount(total)}万元`
+					},
+				},
+			},
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				ticks: {
+					callback: (v) => `${v}万`,
+					color: '#64748b',
+					font: { size: 11 },
+				},
+				grid: {
+					color: 'rgba(148, 163, 184, 0.2)',
+					borderDash: [4, 4],
+				},
+			},
+			x: {
+				ticks: {
+					maxRotation: 20,
+					minRotation: 20,
+					color: '#475569',
+					font: { size: 11, weight: 600 },
+				},
+				grid: { display: false },
+			},
+		},
+	}
+
+	if (chart) {
+		chart.data.labels = labels
+		chart.data.datasets = datasets
+		chart.options = chartOptions
+		chart.update('none')  // 屏外组件跳过渲染动画节省 CPU
+		return
+	}
+
 	chart = new Chart(ctx, {
 		type: 'bar',
 		data: {
 			labels,
-			datasets: [
-				{
-					label: '直接成本',
-					data: direct,
-					stack: 'cost',
-					borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 },
-					borderSkipped: false,
-					categoryPercentage: 0.86,
-					barPercentage: 0.82,
-					maxBarThickness: 56,
-					backgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#6db8f5'
-						return buildGradient(context.chart.ctx, area, ['rgba(56, 189, 248, 0.92)', 'rgba(186, 230, 253, 0.96)'])
-					},
-					hoverBackgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#38bdf8'
-						return buildGradient(context.chart.ctx, area, ['rgba(14, 165, 233, 1)', 'rgba(125, 211, 252, 1)'])
-					},
-				},
-				{
-					label: '共摊成本',
-					data: shared,
-					stack: 'cost',
-					borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
-					borderSkipped: false,
-					categoryPercentage: 0.86,
-					barPercentage: 0.82,
-					maxBarThickness: 56,
-					backgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#f2c16f'
-						return buildGradient(context.chart.ctx, area, ['rgba(251, 191, 36, 0.9)', 'rgba(254, 243, 199, 0.96)'])
-					},
-					hoverBackgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#f59e0b'
-						return buildGradient(context.chart.ctx, area, ['rgba(217, 119, 6, 1)', 'rgba(252, 211, 77, 1)'])
-					},
-				},
-			],
+			datasets,
 		},
-		options: {
-			maintainAspectRatio: false,
-			animation: {
-				duration: 650,
-				easing: 'easeOutCubic',
-			},
-			onClick: (_evt, elements) => {
-				if (!elements.length) return
-				const idx = elements[0].index
-				emit('bar-click', props.rows[idx])
-			},
-			onHover: (evt, elements) => {
-				const target = evt?.native?.target
-				if (!target) return
-				target.style.cursor = elements.length ? 'pointer' : 'default'
-			},
-			plugins: {
-				legend: { display: false },
-				tooltip: {
-					displayColors: true,
-					padding: 10,
-					backgroundColor: '#ffffff',
-					titleColor: '#334155',
-					bodyColor: '#334155',
-					borderColor: 'rgba(148, 163, 184, 0.35)',
-					borderWidth: 1,
-					titleFont: { weight: 600 },
-					callbacks: {
-						title: (items) => items?.[0]?.label || '',
-						label: (context) => `${context.dataset.label}: ${formatAmount(context.parsed.y)}万元`,
-						footer: (items) => {
-							const i = items?.[0]?.dataIndex
-							if (i == null) return ''
-							const total = toNum(direct[i]) + toNum(shared[i])
-							return `合计: ${formatAmount(total)}万元`
-						},
-					},
-				},
-			},
-			scales: {
-				y: {
-					beginAtZero: true,
-					ticks: {
-						callback: (v) => `${v}万`,
-						color: '#64748b',
-						font: { size: 11 },
-					},
-					grid: {
-						color: 'rgba(148, 163, 184, 0.2)',
-						borderDash: [4, 4],
-					},
-				},
-				x: {
-					ticks: {
-						maxRotation: 20,
-						minRotation: 20,
-						color: '#475569',
-						font: { size: 11, weight: 600 },
-					},
-					grid: { display: false },
-				},
-			},
-		},
+		options: chartOptions,
 		plugins: [totalLabelPlugin],
 	})
 }
 
-watch(() => props.rows, () => renderChart(), { deep: true })
+watch(() => props.rows, () => renderChart(), { deep: false })
 
 onMounted(() => renderChart())
 onBeforeUnmount(() => destroyChart())

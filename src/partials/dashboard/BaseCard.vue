@@ -105,6 +105,44 @@ import { GLOBAL_CONFIG } from '../../utils/Utils'
 
 const API_BASE_URL = GLOBAL_CONFIG.API_BASE_URL;
 const colors = ['rgba(76, 175, 80, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(244, 67, 54, 0.7)'];
+const unitPerfCache = new Map();
+const unitPerfInFlight = new Map();
+
+const getUnitPerfCacheKey = (orgId, year, month) => `${orgId}-${year}-${month}`;
+
+const fetchUnitPerformance = async (orgId, year, month) => {
+  const cacheKey = getUnitPerfCacheKey(orgId, year, month);
+  if (unitPerfCache.has(cacheKey)) {
+    return unitPerfCache.get(cacheKey);
+  }
+
+  if (unitPerfInFlight.has(cacheKey)) {
+    return unitPerfInFlight.get(cacheKey);
+  }
+
+  const params = new URLSearchParams({
+    org_id: orgId,
+    year,
+    month,
+  });
+
+  const pending = fetch(`${API_BASE_URL}/unit-performance?${params.toString()}`)
+    .then((response) => {
+      if (!response.ok) throw new Error('Fetch failed');
+      return response.json();
+    })
+    .then((res) => {
+      const allData = Array.isArray(res.data) ? res.data : [];
+      unitPerfCache.set(cacheKey, allData);
+      return allData;
+    })
+    .finally(() => {
+      unitPerfInFlight.delete(cacheKey);
+    });
+
+  unitPerfInFlight.set(cacheKey, pending);
+  return pending;
+};
 
 export default {
   name: 'BaseCard',
@@ -258,17 +296,7 @@ export default {
       isLoading.value = true;
       
       try {
-        const params = new URLSearchParams({
-          org_id: props.orgId,
-          year: props.selectedYear,
-          month: props.selectedMonth
-        });
-
-        const response = await fetch(`${API_BASE_URL}/unit-performance?${params.toString()}`);
-        if (!response.ok) throw new Error('Fetch failed');
-        
-        const res = await response.json();
-        const allData = res.data || [];
+        const allData = await fetchUnitPerformance(props.orgId, props.selectedYear, props.selectedMonth);
 
         // 数据清洗与分发
         fullCurrentYearData.value = allData.filter(item => Math.floor(item.time_id / 100) === props.selectedYear);

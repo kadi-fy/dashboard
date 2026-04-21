@@ -120,8 +120,8 @@
             </div>
 
             <DepartmentOverview
-              :selected-year="selectedYear"
-              :selected-month="selectedMonth"
+              :selected-year="deferredYear"
+              :selected-month="deferredMonth"
             />
 
             <div class="col-span-full mt-2">
@@ -135,26 +135,26 @@
                 <BaseCard
                   metric-type="profit_total"
                   :org-id="3"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="revenue"
                   :org-id="3"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="new_contract"
                   :org-id="3"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="cash"
                   :org-id="3"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                   modal-chart-type="line"
                 />
               </div>
@@ -171,26 +171,26 @@
                 <BaseCard
                   metric-type="profit_total"
                   :org-id="4"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="revenue"
                   :org-id="4"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="new_contract"
                   :org-id="4"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="cash"
                   :org-id="4"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                   modal-chart-type="line"
                 />
               </div>
@@ -207,20 +207,20 @@
                 <BaseCard
                   metric-type="profit_total"
                   :org-id="5"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="revenue"
                   :org-id="5"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                 />
                 <BaseCard
                   metric-type="cash"
                   :org-id="5"
-                  :selected-year="selectedYear"
-                  :selected-month="selectedMonth"
+                  :selected-year="deferredYear"
+                  :selected-month="deferredMonth"
                   modal-chart-type="line"
                 />
               </div>
@@ -276,7 +276,6 @@ export default {
     const companyCurrentYearData = ref([])
     const companyLastYearData = ref([])
     const companySnapshot = ref({})
-    const departmentData = ref([])
     const companyUnitOrgId = ref(null)
     const isLoading = ref(false)
     const loadError = ref('')
@@ -284,6 +283,11 @@ export default {
     const bootProgress = ref(0)
     const bootStatusText = ref('准备初始化...')
     const hasBooted = ref(false)
+
+    // 首屏外组件延迟更新所用 refs
+    const deferredYear = ref(now.getFullYear())
+    const deferredMonth = ref(now.getMonth() + 1)
+    let deferTimer = null
 
     const setBootProgress = (progress, status) => {
       bootProgress.value = Math.min(100, Math.max(0, progress))
@@ -341,14 +345,6 @@ export default {
       companySnapshot.value = attachCompanyCompletion(snapshot)
     }
 
-    const loadDepartmentData = async () => {
-      const url = `${API_BASE_URL}/department-performance?year=${selectedYear.value}&month=${selectedMonth.value}`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('department-performance api error')
-      const payload = await res.json()
-      departmentData.value = Array.isArray(payload.data) ? payload.data : []
-    }
-
     const loadCompanyUnitOrgId = async () => {
       const res = await fetch(`${API_BASE_URL}/organizations`)
       if (!res.ok) {
@@ -379,14 +375,12 @@ export default {
       isLoading.value = true
       loadError.value = ''
 
-      const [companyResult, departmentResult] = await Promise.allSettled([
+      const [companyResult] = await Promise.allSettled([
         loadCompanyData(),
-        loadDepartmentData(),
       ])
 
       const failed = []
       if (companyResult.status === 'rejected') failed.push('公司指标')
-      if (departmentResult.status === 'rejected') failed.push('部门指标')
 
       if (failed.length) {
         loadError.value = `${failed.join('、')}加载失败，请确认后端接口状态`
@@ -402,6 +396,12 @@ export default {
       if (!nextY || !nextM) return
       selectedYear.value = nextY
       selectedMonth.value = nextM
+      // 首屏外组件延迟 300ms 更新，避免全页同时重绘卡顿
+      if (deferTimer) clearTimeout(deferTimer)
+      deferTimer = setTimeout(() => {
+        deferredYear.value = nextY
+        deferredMonth.value = nextM
+      }, 300)
     }
 
     watch([selectedYear, selectedMonth], () => {
@@ -449,17 +449,21 @@ export default {
 
       await finishBootWhenRendered()
       hasBooted.value = true
+      // 启动完成后同步 deferred refs，确保首次渲染正确
+      deferredYear.value = selectedYear.value
+      deferredMonth.value = selectedMonth.value
     })
 
     return {
       sidebarOpen,
       selectedYear,
       selectedMonth,
+      deferredYear,
+      deferredMonth,
       monthPickerValue,
       companyCurrentYearData,
       companyLastYearData,
       companySnapshot,
-      departmentData,
       companyUnitOrgId,
       isLoading,
       loadError,

@@ -231,6 +231,10 @@ export default {
         mode: 'index',
         axis: 'x',
       },
+      animation: {
+        duration: 450,
+        easing: 'easeOutCubic',
+      },
       maintainAspectRatio: false,
       resizeDelay: 200,
     })
@@ -252,7 +256,7 @@ export default {
         chart.data = chartData.value
         // 避免保留上一次悬停态导致点半径异常放大
         chart.setActiveElements([])
-        chart.update('none')
+        chart.update()
         return
       }
 
@@ -274,7 +278,7 @@ export default {
       () => {
         renderChart()
       },
-      { deep: true },
+      { deep: false },
     )
 
     watch(

@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="canvas" :width="width" :height="height"></canvas>
+  <canvas ref="canvas" :width="width" :height="height" class="metric-line-enter"></canvas>
 </template>
 
 <script>
@@ -184,7 +184,13 @@ export default {
       chart = new Chart(canvasEl, {
         type: 'line',
         data: chartData.value,
-        options: options.value,
+        options: {
+          ...options.value,
+          animation: {
+            duration: 550,
+            easing: 'easeOutCubic',
+          },
+        },
       })
     }
 
@@ -222,3 +228,19 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.metric-line-enter {
+  animation: metricFadeUp 0.38s ease-out both;
+}
+@keyframes metricFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

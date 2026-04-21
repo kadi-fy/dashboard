@@ -211,8 +211,10 @@ const renderChart = () => {
 		destroyChart()
 		return
 	}
-	destroyChart()
-	if (isEmpty.value) return
+	if (isEmpty.value) {
+		destroyChart()
+		return
+	}
 
 	const rows = props.rows
 	const labels = rows.map((r) => r.org_name)
@@ -233,75 +235,85 @@ const renderChart = () => {
 	const ctx = canvasEl.getContext('2d')
 	if (!ctx) return
 
+	const dataset = {
+		type: 'bar',
+		label: '今年',
+		data: rates,
+		actualValues: actuals,
+		percentValues: rates,
+		borderRadius: 6,
+			categoryPercentage: 0.85,
+			barPercentage: 0.8,
+			maxBarThickness: 62,
+		order: 1,
+		backgroundColor: (context) => {
+			const area = context.chart.chartArea
+			if (!area) return '#9acfa1'
+			const completion = toNum(rates[context.dataIndex]) / 100
+			const colors = getCompletionColors(completion, props.selectedMonth)
+			return buildGradient(context.chart.ctx, area, colors)
+		},
+		hoverBackgroundColor: (context) => {
+			const area = context.chart.chartArea
+			if (!area) return '#74bf7f'
+			const completion = toNum(rates[context.dataIndex]) / 100
+			const colors = getCompletionHoverColors(completion, props.selectedMonth)
+			return buildGradient(context.chart.ctx, area, colors)
+		},
+	}
+
+	const chartOptions = {
+		maintainAspectRatio: false,
+		plugins: {
+			legend: { display: false },
+			tooltip: {
+				callbacks: {
+					label: (context) => {
+						const i = context.dataIndex
+						return `${context.dataset.label}: ${Math.round(actuals[i])}万元 (${toNum(rates[i]).toFixed(1)}%)`
+					},
+				},
+			},
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				max: yMax,
+				ticks: { stepSize: yStep, callback: (v) => `${v}%` },
+				grid: { color: '#eef2f7' },
+			},
+			x: {
+				ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
+				grid: { display: false },
+			},
+		},
+		onClick: (_evt, elements) => {
+			if (!props.clickable || !elements.length) return
+			const idx = elements[0].index
+			emit('bar-click', rows[idx])
+		},
+		onHover: (evt, elements) => {
+			const target = evt?.native?.target
+			if (!target) return
+			target.style.cursor = props.clickable && elements.length ? 'pointer' : 'default'
+		},
+	}
+
+	if (chart) {
+		chart.data.labels = labels
+		chart.data.datasets = [dataset]
+		chart.options = chartOptions
+		chart.update('none')  // 屏外组件跳过渲染动画节省 CPU
+		return
+	}
+
 	chart = new Chart(ctx, {
 		type: 'bar',
 		data: {
 			labels,
-			datasets: [
-				{
-					type: 'bar',
-					label: '今年',
-					data: rates,
-					actualValues: actuals,
-					percentValues: rates,
-					borderRadius: 6,
-						categoryPercentage: 0.85,
-						barPercentage: 0.8,
-						maxBarThickness: 62,
-					order: 1,
-					backgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#9acfa1'
-						const completion = toNum(rates[context.dataIndex]) / 100
-						const colors = getCompletionColors(completion, props.selectedMonth)
-						return buildGradient(context.chart.ctx, area, colors)
-					},
-					hoverBackgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#74bf7f'
-						const completion = toNum(rates[context.dataIndex]) / 100
-						const colors = getCompletionHoverColors(completion, props.selectedMonth)
-						return buildGradient(context.chart.ctx, area, colors)
-					},
-				},
-			],
+			datasets: [dataset],
 		},
-		options: {
-			maintainAspectRatio: false,
-			plugins: {
-				legend: { display: false },
-				tooltip: {
-					callbacks: {
-						label: (context) => {
-							const i = context.dataIndex
-							return `${context.dataset.label}: ${Math.round(actuals[i])}万元 (${toNum(rates[i]).toFixed(1)}%)`
-						},
-					},
-				},
-			},
-			scales: {
-				y: {
-					beginAtZero: true,
-					max: yMax,
-					ticks: { stepSize: yStep, callback: (v) => `${v}%` },
-					grid: { color: '#eef2f7' },
-				},
-				x: {
-					ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
-					grid: { display: false },
-				},
-			},
-			onClick: (_evt, elements) => {
-				if (!props.clickable || !elements.length) return
-				const idx = elements[0].index
-				emit('bar-click', rows[idx])
-			},
-			onHover: (evt, elements) => {
-				const target = evt?.native?.target
-				if (!target) return
-				target.style.cursor = props.clickable && elements.length ? 'pointer' : 'default'
-			},
-		},
+		options: chartOptions,
 		plugins: [completionLabelPlugin],
 	})
 }
@@ -309,7 +321,7 @@ const renderChart = () => {
 watch(
 	() => [props.rows, props.selectedMonth, props.actualKey, props.planKey],
 	() => renderChart(),
-	{ deep: true },
+	{ deep: false },
 )
 
 onMounted(() => renderChart())

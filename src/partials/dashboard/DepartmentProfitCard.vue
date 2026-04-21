@@ -137,8 +137,10 @@ const renderChart = () => {
 		destroyChart()
 		return
 	}
-	destroyChart()
-	if (isEmpty.value) return
+	if (isEmpty.value) {
+		destroyChart()
+		return
+	}
 
 	const labels = props.rows.map((r) => r.org_name)
 	const profits = props.rows.map((r) => toNum(r.department_profit))
@@ -146,72 +148,82 @@ const renderChart = () => {
 	const ctx = canvasEl.getContext('2d')
 	if (!ctx) return
 
+	const dataset = {
+		label: '利润',
+		data: profits,
+		borderRadius: 6,
+		categoryPercentage: 0.8,
+		barPercentage: 0.86,
+		maxBarThickness: 48,
+		backgroundColor: (context) => {
+			const area = context.chart.chartArea
+			if (!area) return '#9acfa1'
+			const v = toNum(profits[context.dataIndex])
+			if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(98, 194, 105, 0.95)', 'rgba(176, 227, 180, 0.95)'])
+			return buildGradient(context.chart.ctx, area, ['rgba(233, 102, 102, 0.95)', 'rgba(249, 173, 173, 0.95)'])
+		},
+		hoverBackgroundColor: (context) => {
+			const area = context.chart.chartArea
+			if (!area) return '#4ade80'
+			const v = toNum(profits[context.dataIndex])
+			if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(34, 197, 94, 1)', 'rgba(134, 239, 172, 1)'])
+			return buildGradient(context.chart.ctx, area, ['rgba(239, 68, 68, 1)', 'rgba(252, 165, 165, 1)'])
+		},
+	}
+
+	const chartOptions = {
+		maintainAspectRatio: false,
+		onClick: (_evt, elements) => {
+			if (!elements.length) return
+			const idx = elements[0].index
+			emit('bar-click', props.rows[idx])
+		},
+		onHover: (evt, elements) => {
+			const target = evt?.native?.target
+			if (!target) return
+			target.style.cursor = elements.length ? 'pointer' : 'default'
+		},
+		plugins: {
+			legend: { display: false },
+			tooltip: {
+				callbacks: {
+					label: (context) => `利润: ${toNum(context.parsed.y).toFixed(0)}万元`,
+				},
+			},
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				ticks: { callback: (v) => `${v}万元` },
+				grid: { color: '#eef2f7' },
+			},
+			x: {
+				ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
+				grid: { display: false },
+			},
+		},
+	}
+
+	if (chart) {
+		chart.data.labels = labels
+		chart.data.datasets = [dataset]
+		chart.options = chartOptions
+		chart.update('none')  // 屏外组件跳过渲染动画节省 CPU
+		return
+	}
+
 	chart = new Chart(ctx, {
 		type: 'bar',
 		data: {
 			labels,
-			datasets: [
-				{
-					label: '利润',
-					data: profits,
-					borderRadius: 6,
-					categoryPercentage: 0.8,
-					barPercentage: 0.86,
-					maxBarThickness: 48,
-					backgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#9acfa1'
-						const v = toNum(profits[context.dataIndex])
-						if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(98, 194, 105, 0.95)', 'rgba(176, 227, 180, 0.95)'])
-						return buildGradient(context.chart.ctx, area, ['rgba(233, 102, 102, 0.95)', 'rgba(249, 173, 173, 0.95)'])
-					},
-					hoverBackgroundColor: (context) => {
-						const area = context.chart.chartArea
-						if (!area) return '#4ade80'
-						const v = toNum(profits[context.dataIndex])
-						if (v >= 0) return buildGradient(context.chart.ctx, area, ['rgba(34, 197, 94, 1)', 'rgba(134, 239, 172, 1)'])
-						return buildGradient(context.chart.ctx, area, ['rgba(239, 68, 68, 1)', 'rgba(252, 165, 165, 1)'])
-					},
-				},
-			],
+			datasets: [dataset],
 		},
-		options: {
-			maintainAspectRatio: false,
-			onClick: (_evt, elements) => {
-				if (!elements.length) return
-				const idx = elements[0].index
-				emit('bar-click', props.rows[idx])
-			},
-			onHover: (evt, elements) => {
-				const target = evt?.native?.target
-				if (!target) return
-				target.style.cursor = elements.length ? 'pointer' : 'default'
-			},
-			plugins: {
-				legend: { display: false },
-				tooltip: {
-					callbacks: {
-						label: (context) => `利润: ${toNum(context.parsed.y).toFixed(0)}万元`,
-					},
-				},
-			},
-			scales: {
-				y: {
-					beginAtZero: true,
-					ticks: { callback: (v) => `${v}万元` },
-					grid: { color: '#eef2f7' },
-				},
-				x: {
-					ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },
-					grid: { display: false },
-				},
-			},
-		},
+		options: chartOptions,
 		plugins: [valuePlugin],
 	})
 }
 
-watch(() => props.rows, () => renderChart(), { deep: true })
+watch(() => props.rows, () => renderChart(), { deep: false })
 
 onMounted(() => renderChart())
 onBeforeUnmount(() => destroyChart())
