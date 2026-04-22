@@ -91,9 +91,7 @@
                 <span class="text-xs text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 inline-flex items-center">
                   <span class="font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                   <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                  <span class="truncate mr-1 hidden sm:inline font-medium text-purple-700 dark:text-purple-300">
-                    {{ issue.org_type === 'department' ? '部门利润' : '企业利润总额' }}
-                  </span>
+                  <span class="truncate mr-1 hidden sm:inline font-medium text-purple-700 dark:text-purple-300">{{ issue.metric }}</span>
                   <span class="text-purple-600 dark:text-purple-400 font-bold bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded text-[10px] border border-purple-100 dark:border-purple-900/30">
                     {{ issue.profit_formatted }}
                   </span>
@@ -108,9 +106,7 @@
               <span v-for="(issue, index) in negativeIssues" :key="'neg-dup-' + index" class="inline-flex items-center px-1.5 py-0.5 rounded">
                 <span class="text-xs text-gray-600 dark:text-gray-400 font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                 <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                <span class="text-xs truncate mr-1 hidden sm:inline font-medium text-purple-700 dark:text-purple-300">
-                   {{ issue.org_type === 'department' ? '部门利润' : '企业利润总额' }}
-                </span>
+                <span class="text-xs truncate mr-1 hidden sm:inline font-medium text-purple-700 dark:text-purple-300">{{ issue.metric }}</span>
                 <span class="text-purple-600 dark:text-purple-400 font-bold bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded text-[10px] border border-purple-100 dark:border-purple-900/30">{{ issue.profit_formatted }}</span>
               </span>
             </template>
@@ -179,7 +175,7 @@
               <template v-if="tooltip.type === 'negative'">
                 <div class="bg-purple-50 dark:bg-purple-900/10 p-3 rounded-lg text-center border border-purple-100 dark:border-purple-900/20">
                   <div class="text-[10px] text-purple-600 dark:text-purple-400 mb-1 font-bold uppercase">
-                    {{ tooltip.data?.org_type === 'department' ? '当前部门利润' : '当前企业利润总额' }}
+                    当前{{ tooltip.data?.metric || '亏损指标' }}
                   </div>
                   <div class="text-xl font-bold text-purple-700 dark:text-purple-300">{{ formatNumber(tooltip.data?.profit_value) }}</div>
                   <div class="text-[10px] text-purple-500/80 mt-1">低于盈亏平衡点</div>
@@ -251,7 +247,7 @@
                       <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1.5 mb-1.5">
                           <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/60 dark:bg-slate-900/50 border border-current/25 text-current/70 tracking-widest uppercase select-none">#{{ idx + 1 }}</span>
-                          <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold tracking-wide border" :class="getOrgTypeBadgeClass(item.org_type, detailModal.type)">{{ getOrgTypeLabel(item.org_type) }}</span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold tracking-wide border" :class="getOrgTypeBadgeClass(item.org_type, detailModal.type)">{{ getOrgTypeLabel(item) }}</span>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                           <h4 class="text-base font-extrabold bg-clip-text text-transparent leading-snug shrink-0" :class="getOrgNameGradient(detailModal.type)">{{ item.org_name }}</h4>
@@ -358,33 +354,162 @@
                     </div>
 
                     <div v-else class="space-y-2.5">
-                      <div class="rounded-xl border border-purple-200/70 dark:border-purple-900/35 bg-gradient-to-r from-purple-50/75 via-white to-fuchsia-50/75 dark:from-purple-950/35 dark:via-slate-900/50 dark:to-fuchsia-950/30 p-3.5 space-y-2.5">
-                        <div class="flex items-center justify-between text-xs">
-                          <span class="text-gray-500 dark:text-gray-400">亏损强度（同类相对）</span>
-                          <span class="font-semibold text-purple-600 dark:text-purple-300">{{ getNegativeLossSeverityPercent(item) }}%</span>
-                        </div>
+                      <div v-if="isNegativeTrendSupported(item)" class="rounded-xl border border-indigo-200/70 dark:border-indigo-900/35 bg-gradient-to-r from-indigo-50/75 via-white to-sky-50/75 dark:from-indigo-950/30 dark:via-slate-900/50 dark:to-sky-950/30 p-3.5 space-y-3">
+                        <template v-if="getNegativeTrend(item)">
+                          <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-gray-500 dark:text-gray-400">当月 vs 上月亏损趋势</span>
+                            <span class="px-2 py-0.5 rounded-full border border-indigo-200/80 bg-white/80 text-indigo-700 dark:border-indigo-800/70 dark:bg-slate-900/50 dark:text-indigo-200 font-semibold">
+                              {{ getNegativeTrendStatus(item) }}
+                            </span>
+                          </div>
 
-                        <div class="h-5 rounded-full bg-purple-100/90 dark:bg-purple-950/45 overflow-hidden relative">
-                          <div
-                            class="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 transition-all duration-500"
-                            :style="{ width: getNegativeLossSeverityPercent(item) + '%' }"
-                          ></div>
-                          <div class="absolute inset-0 flex items-center justify-between px-2.5 text-[10px] text-purple-700/80 dark:text-purple-200/85 font-semibold pointer-events-none">
-                            <span>盈亏线 0</span>
-                            <span>较重亏损</span>
+                          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px]">
+                            <div class="rounded-lg border border-slate-200/80 dark:border-slate-700/60 bg-white/70 dark:bg-slate-900/40 px-2.5 py-2">
+                              <div class="text-gray-400 dark:text-gray-500 mb-1">上月</div>
+                              <div class="font-semibold text-slate-600 dark:text-slate-300">{{ getNegativeTrend(item).previousLabel }}</div>
+                              <div class="mt-1 text-sm font-bold text-slate-700 dark:text-slate-200">{{ formatNumber(getNegativeTrend(item).previousValue) }}</div>
+                            </div>
+                            <div class="rounded-lg border border-indigo-100/80 dark:border-indigo-900/40 bg-indigo-50/70 dark:bg-indigo-950/20 px-2.5 py-2">
+                              <div class="text-indigo-500 dark:text-indigo-300 mb-1">当月</div>
+                              <div class="font-semibold text-indigo-600 dark:text-indigo-300">{{ getNegativeTrend(item).currentLabel }}</div>
+                              <div class="mt-1 text-sm font-bold text-indigo-700 dark:text-indigo-200">{{ formatNumber(getNegativeTrend(item).currentValue) }}</div>
+                            </div>
+                            <div class="rounded-lg border border-sky-100/80 dark:border-sky-900/40 bg-sky-50/70 dark:bg-sky-950/20 px-2.5 py-2">
+                              <div class="text-sky-500 dark:text-sky-300 mb-1">变化</div>
+                              <div class="font-semibold text-sky-600 dark:text-sky-300">趋势判断</div>
+                              <div class="mt-1 text-sm font-bold text-sky-700 dark:text-sky-200">{{ getNegativeTrendDeltaLabel(item) }}</div>
+                            </div>
                           </div>
-                        </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                          <div class="rounded-lg border border-purple-100/80 dark:border-purple-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
-                            <span class="text-gray-500 dark:text-gray-400">当前亏损值</span>
-                            <span class="font-semibold text-purple-600 dark:text-purple-300">{{ formatNumber(item.profit_value) }}</span>
+                          <div class="space-y-2.5">
+                            <div class="flex items-center justify-between text-[11px]">
+                              <span class="text-slate-600 dark:text-slate-300">{{ getNegativeTrendBaselineLabel(item) }}：{{ formatNumber(getNegativeTrendBaseValue(item)) }}</span>
+                                <div class="flex items-center gap-2">
+                                  <span v-if="getNegativeTrendExpandedPercent(item) > 0" class="text-rose-600 dark:text-rose-300 font-semibold">亏损扩大：{{ getNegativeTrendExpandedPercent(item) }}%</span>
+                                  <span v-if="getNegativeTrendNarrowedPercent(item) > 0" class="text-emerald-600 dark:text-emerald-300 font-semibold">亏损收窄：{{ getNegativeTrendNarrowedPercent(item) }}%</span>
+                                  <span v-else-if="isNegativeTrendCrossToLoss(item)" class="text-rose-600 dark:text-rose-300 font-semibold">由盈转亏</span>
+                                  <span v-else-if="getNegativeTrendExpandedPercent(item) <= 0" class="text-slate-600 dark:text-slate-300 font-semibold">基本持平</span>
+                                </div>
+                            </div>
+
+                            <div class="relative h-6 rounded-full overflow-hidden bg-slate-200/90 dark:bg-slate-700/80">
+                              <div class="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-slate-400/60 to-slate-500/65 dark:from-slate-500/60 dark:to-slate-400/60"></div>
+                              <template v-if="isNegativeTrendCrossToLoss(item)">
+                                <div class="absolute inset-y-0 bg-emerald-500/15 dark:bg-emerald-500/20" :style="getNegativeTrendCrossProfitTrackStyle(item)"></div>
+                                <div class="absolute inset-y-0 bg-rose-500/15 dark:bg-rose-500/20" :style="getNegativeTrendCrossLossTrackStyle(item)"></div>
+                                <div class="absolute inset-y-0 cross-to-loss-profit-track" :style="getNegativeTrendCrossProfitTrackStyle(item)">
+                                  <div class="cross-to-loss-profit-fill"></div>
+                                </div>
+                                <div class="absolute inset-y-0 cross-to-loss-loss-track" :style="getNegativeTrendCrossLossTrackStyle(item)">
+                                  <div class="cross-to-loss-loss-fill"></div>
+                                </div>
+                                <div class="absolute inset-y-0 w-[2px] bg-white/90 dark:bg-white/70 z-10" :style="getNegativeTrendCrossZeroLineStyle(item)"></div>
+                              </template>
+                              <template v-else-if="getNegativeTrendExpandedPercent(item) > 0">
+                                <div
+                                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-600"
+                                  :style="{ width: getNegativeTrendPreviousRatioPercent(item) + '%' }"
+                                ></div>
+                                <div
+                                  class="absolute inset-y-0 bg-gradient-to-r from-rose-500/95 to-red-500/95 dark:from-rose-500/80 dark:to-red-500/80 loss-expanded-zone loss-expanded-grow-sync"
+                                  :style="getNegativeTrendExpandedStyle(item)"
+                                >
+                                  <div class="loss-expanded-sweep"></div>
+                                </div>
+                                <div class="absolute inset-y-0 w-[2px] bg-white/80 dark:bg-white/60" :style="{ left: 'calc(' + getNegativeTrendPreviousRatioPercent(item) + '% - 1px)' }"></div>
+                              </template>
+                              <template v-else>
+                                <div
+                                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-slate-500/85 to-slate-400/90 dark:from-slate-400/80 dark:to-slate-300/75"
+                                  :style="{ width: getNegativeTrendPreviousRatioPercent(item) + '%' }"
+                                ></div>
+                                <div
+                                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500"
+                                  :style="{ width: getNegativeTrendCurrentRatioPercent(item) + '%' }"
+                                ></div>
+                                <div
+                                  v-if="getNegativeTrendNarrowedPercent(item) > 0"
+                                  class="absolute inset-y-0 bg-gradient-to-r from-emerald-300/95 to-teal-400/95 dark:from-emerald-400/80 dark:to-teal-400/80 loss-narrowed-zone loss-narrowed-shrink-sync"
+                                  :style="getNegativeTrendNarrowedStyle(item)"
+                                >
+                                  <div class="loss-narrowed-sweep"></div>
+                                </div>
+                                <div
+                                  v-if="getNegativeTrendNarrowedPercent(item) > 0"
+                                  class="absolute inset-y-0 w-[2px] bg-white/80 dark:bg-white/60"
+                                  :style="{ left: 'calc(' + getNegativeTrendCurrentRatioPercent(item) + '% - 1px)' }"
+                                ></div>
+                              </template>
+                            </div>
+
                           </div>
-                          <div class="rounded-lg border border-purple-100/80 dark:border-purple-900/40 bg-white/70 dark:bg-slate-900/40 px-2.5 py-1.5 flex items-center justify-between">
-                            <span class="text-gray-500 dark:text-gray-400">同类最重亏损</span>
-                            <span class="font-semibold text-fuchsia-600 dark:text-fuchsia-300">{{ formatNumber(getNegativeWorstLossValue(item.org_type)) }}</span>
+                        </template>
+
+                        <div v-else-if="isNegativeVisualLoading(item)" class="text-[11px] text-gray-500 dark:text-gray-400">正在加载月度对比...</div>
+                        <div v-else class="text-[11px] text-gray-500 dark:text-gray-400">暂无月度对比数据</div>
+                      </div>
+
+                      <div v-if="isDepartmentProfitCompositionSupported(item)" class="rounded-xl border border-cyan-200/70 dark:border-cyan-900/35 bg-gradient-to-r from-cyan-50/75 via-white to-teal-50/75 dark:from-cyan-950/30 dark:via-slate-900/50 dark:to-teal-950/30 p-3.5 space-y-3">
+                        <template v-if="getDepartmentProfitComposition(item)">
+                          <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-gray-500 dark:text-gray-400">部门利润构成关系</span>
+                            <span class="px-2 py-0.5 rounded-full border border-cyan-200/80 bg-white/80 text-cyan-700 dark:border-cyan-800/70 dark:bg-slate-900/50 dark:text-cyan-200 font-semibold">
+                              {{ getDepartmentProfitComposition(item).currentLabel }}
+                            </span>
                           </div>
-                        </div>
+
+                          <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                            <span class="px-2 py-1 rounded-lg bg-cyan-50 text-cyan-700 border border-cyan-100 dark:bg-cyan-950/30 dark:text-cyan-200 dark:border-cyan-900/40">税后净收费 {{ formatNumber(getDepartmentProfitComposition(item).afterTaxCharge) }}</span>
+                            <span class="text-gray-300 dark:text-gray-600 font-semibold">-</span>
+                            <span class="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-100 dark:bg-rose-950/30 dark:text-rose-200 dark:border-rose-900/40">直接成本 {{ formatNumber(getDepartmentProfitComposition(item).directCostAdjusted) }}</span>
+                            <span class="text-gray-300 dark:text-gray-600 font-semibold">-</span>
+                            <span class="px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-900/40">共摊成本 {{ formatNumber(getDepartmentProfitComposition(item).allocatedCost) }}</span>
+                            <span class="text-gray-300 dark:text-gray-600 font-semibold">=</span>
+                            <span class="px-2 py-1 rounded-lg bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-100 dark:bg-fuchsia-950/30 dark:text-fuchsia-200 dark:border-fuchsia-900/40">部门利润 {{ formatNumber(getDepartmentProfitComposition(item).profitValue) }}</span>
+                          </div>
+
+                          <div class="space-y-2">
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                              <span>成本构成条（成本合计 {{ formatNumber(getDepartmentProfitComposition(item).totalCost) }}）</span>
+                              <div class="flex items-center gap-2.5 text-[10px]">
+                                <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>直接成本</span>
+                                <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>间接成本</span>
+                              </div>
+                            </div>
+                            <div class="relative h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/70">
+                              <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-rose-400 to-rose-500" :style="{ width: getDepartmentCompositionSegmentWidth(item, 'directCostAdjusted') }"></div>
+                              <div class="absolute inset-y-0 bg-gradient-to-r from-amber-300 to-amber-400" :style="{ left: getDepartmentCompositionSegmentWidth(item, 'directCostAdjusted'), width: getDepartmentCompositionSegmentWidth(item, 'allocatedCost') }"></div>
+                            </div>
+                            <div class="space-y-2">
+                              <div class="relative h-[44px] rounded-2xl border border-slate-200/80 dark:border-slate-700/70 bg-white/75 dark:bg-slate-900/55 overflow-hidden shadow-inner">
+                                <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(6,182,212,0.08),transparent_34%),radial-gradient(circle_at_82%_50%,rgba(139,92,246,0.1),transparent_36%),linear-gradient(90deg,rgba(148,163,184,0.08)_0%,rgba(148,163,184,0.02)_100%)] dark:bg-[radial-gradient(circle_at_20%_50%,rgba(34,211,238,0.12),transparent_34%),radial-gradient(circle_at_82%_50%,rgba(196,181,253,0.14),transparent_36%),linear-gradient(90deg,rgba(148,163,184,0.12)_0%,rgba(148,163,184,0.04)_100%)]"></div>
+                                <div class="absolute top-[3px] -translate-x-1/2 max-w-[46%] truncate rounded-md border border-cyan-200/80 bg-cyan-50/92 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/40 dark:text-cyan-200" :style="{ left: getDepartmentCompositionRevenueLabelMarker(item) }">
+                                  税后净收费 {{ formatNumber(getDepartmentProfitComposition(item).afterTaxCharge) }}
+                                </div>
+                                <div class="absolute top-[3px] -translate-x-1/2 max-w-[46%] truncate rounded-md border border-violet-200/80 bg-violet-50/92 px-1.5 py-0.5 text-[9px] font-semibold text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200" :style="{ left: getDepartmentCompositionLossLabelMarker(item) }">
+                                  {{ getDepartmentCompositionResultLabel(item) }} {{ formatNumber(getDepartmentCompositionResultValue(item)) }}
+                                </div>
+                                <div class="absolute inset-y-[9px] left-1/4 w-px bg-slate-300/45 dark:bg-slate-600/45"></div>
+                                <div class="absolute inset-y-[7px] left-1/2 w-px bg-slate-300/55 dark:bg-slate-500/55"></div>
+                                <div class="absolute inset-y-[9px] left-3/4 w-px bg-slate-300/45 dark:bg-slate-600/45"></div>
+                                <div class="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-px bg-slate-300/70 dark:bg-slate-600/70"></div>
+                                <div class="absolute top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-sky-500 dark:from-cyan-300 dark:via-cyan-400 dark:to-sky-400 shadow-[0_0_14px_rgba(6,182,212,0.35)]" :style="getDepartmentCompositionRevenueRangeStyle(item)"></div>
+                                <div class="absolute top-1/2 h-0 -translate-y-1/2 border-t-[4px] border-dashed border-violet-400 dark:border-violet-400/85" :style="getDepartmentCompositionLossRangeStyle(item)"></div>
+
+                                <div class="absolute left-0 top-1/2 h-4 w-px -translate-y-1/2 bg-cyan-500 dark:bg-cyan-300"></div>
+                                <div class="absolute top-1/2 h-5 w-px -translate-y-1/2 bg-cyan-500 dark:bg-cyan-300" :style="{ left: 'calc(' + getDepartmentCompositionRevenueMarker(item) + ' - 1px)' }"></div>
+                                <div class="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-violet-500 dark:bg-violet-300 right-0"></div>
+
+                                <div class="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white dark:border-slate-900 bg-cyan-500 dark:bg-cyan-300 shadow-[0_0_0_4px_rgba(6,182,212,0.16),0_0_14px_rgba(6,182,212,0.35)]" :style="{ left: getDepartmentCompositionRevenueMarker(item) }"></div>
+                                <div class="absolute right-0 top-1/2 h-3.5 w-3.5 translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-white dark:border-slate-900 bg-violet-500 dark:bg-violet-300 shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_14px_rgba(139,92,246,0.28)]"></div>
+                              </div>
+                            </div>
+                          </div>
+
+                        </template>
+
+                        <div v-else-if="isNegativeVisualLoading(item)" class="text-[11px] text-gray-500 dark:text-gray-400">正在加载部门利润构成...</div>
+                        <div v-else class="text-[11px] text-gray-500 dark:text-gray-400">暂无部门利润构成数据</div>
                       </div>
                     </div>
                   </div>
@@ -432,6 +557,8 @@ export default {
     const declineDuration = ref(20)
     const behindDuration = ref(20)
     const negativeDuration = ref(20)
+    const negativeVisualData = ref({})
+    const negativeVisualLoading = ref({})
 
     const formatNumber = (val) => {
       if (val === undefined || val === null) return '-'
@@ -442,6 +569,30 @@ export default {
       const absNum = Math.abs(num)
       const formatted = absNum.toFixed(1)
       return `${prefix}${formatted}万元`
+    }
+
+    const normalizeIssueMetric = (item, level) => {
+      if (level === 'unit' && Number(item.org_id) === 2 && item.metric === '净利润') {
+        return '收费口径净利润'
+      }
+      if (level === 'unit' && item.metric === '所属企业利润') {
+        return '利润总额'
+      }
+      return item.metric
+    }
+
+    const normalizeIssueRecord = (item, level, type) => {
+      const isHeadquartersUnit = level === 'unit' && Number(item.org_id) === 2
+      const normalizedOrgType = level === 'department_total' || isHeadquartersUnit ? 'department_total' : item.org_type
+      const normalizedOrgName = level === 'department_total' || isHeadquartersUnit ? '公司本部' : item.org_name
+
+      return {
+        ...item,
+        type,
+        org_type: normalizedOrgType,
+        org_name: normalizedOrgName,
+        metric: normalizeIssueMetric(item, level),
+      }
     }
 
     const calculatePosition = (element) => {
@@ -487,6 +638,8 @@ export default {
         type: issue.type,
         issue,
       }
+
+      if (issue.type === 'negative') loadNegativeVisualData(negativeIssues.value)
     }
 
     const openIssueModalByType = (type) => {
@@ -496,6 +649,8 @@ export default {
         type,
         issue: null,
       }
+
+      if (type === 'negative') loadNegativeVisualData(negativeIssues.value)
     }
 
     const getTooltipLabel = (type) => {
@@ -549,7 +704,8 @@ export default {
       return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-700'
     }
 
-    const getOrgTypeLabel = (orgType) => {
+    const getOrgTypeLabel = (issue) => {
+      const orgType = issue?.org_type
       if (orgType === 'company') return '公司整体'
       if (orgType === 'department_total') return '公司本部'
       if (orgType === 'department') return '部门'
@@ -601,6 +757,11 @@ export default {
       if (type === 'behind') return "完成率"+issue.completion_rate || '--'
       if (type === 'negative') return issue.profit_formatted+"万元" || formatNumber(issue.profit_value)
       return '--'
+    }
+
+    const getNegativeIssueKey = (issue) => {
+      if (!issue) return ''
+      return `${issue.org_type}:${issue.org_id}:${issue.metric}`
     }
 
     const parsePercent = (value) => {
@@ -682,23 +843,310 @@ export default {
       return lastYear > 0 ? 100 : 0
     }
 
-    const getNegativeWorstLossValue = (orgType) => {
-      if (!negativeIssues.value.length) return 0
-      let worst = 0
-      negativeIssues.value.forEach((issue) => {
-        if (orgType && issue.org_type !== orgType) return
-        const profit = toNumber(issue.profit_value)
-        if (profit < worst) worst = profit
-      })
-      return worst
+    const loadNegativeIssueVisual = async (issue) => {
+      const issueKey = getNegativeIssueKey(issue)
+      if (!issueKey) return
+      if (negativeVisualData.value[issueKey] || negativeVisualLoading.value[issueKey]) return
+
+      negativeVisualLoading.value = {
+        ...negativeVisualLoading.value,
+        [issueKey]: true,
+      }
+
+      try {
+        const payload = {
+          trend: issue?.trend || null,
+          composition: issue?.composition || null,
+        }
+
+        negativeVisualData.value = {
+          ...negativeVisualData.value,
+          [issueKey]: payload,
+        }
+      } catch (error) {
+        console.error('加载亏损可视化明细失败:', issue, error)
+      } finally {
+        negativeVisualLoading.value = {
+          ...negativeVisualLoading.value,
+          [issueKey]: false,
+        }
+      }
     }
 
-    const getNegativeLossSeverityPercent = (issue) => {
-      if (!issue) return '0.00'
-      const currentLoss = Math.abs(Math.min(0, toNumber(issue.profit_value)))
-      const worstLoss = Math.abs(Math.min(0, getNegativeWorstLossValue(issue.org_type)))
-      if (worstLoss <= 0) return '0.00'
-      return clampPercent((currentLoss / worstLoss) * 100).toFixed(2)
+    const loadNegativeVisualData = (issues) => {
+      const targetIssues = Array.isArray(issues) ? issues : []
+      const uniqueIssues = []
+      const seen = new Set()
+
+      targetIssues.forEach((issue) => {
+        if (!issue?.trend && !issue?.composition) return
+        const issueKey = getNegativeIssueKey(issue)
+        if (!issueKey || seen.has(issueKey)) return
+        seen.add(issueKey)
+        uniqueIssues.push(issue)
+      })
+
+      uniqueIssues.forEach((issue) => {
+        loadNegativeIssueVisual(issue)
+      })
+    }
+
+    const getNegativeVisual = (issue) => {
+      const issueKey = getNegativeIssueKey(issue)
+      const fromCache = negativeVisualData.value[issueKey] || null
+      const source = (fromCache?.trend || fromCache?.composition)
+        ? fromCache
+        : (issue?.trend || issue?.composition)
+          ? { trend: issue?.trend || null, composition: issue?.composition || null }
+          : null
+
+      if (source) {
+        const trend = source.trend ? {
+          currentValue: toNumber(source.trend.currentValue ?? source.trend.current_value),
+          previousValue: toNumber(source.trend.previousValue ?? source.trend.previous_value),
+          changeValue: toNumber(source.trend.changeValue ?? source.trend.delta),
+          currentLabel: source.trend.currentLabel || source.trend.current_period || '',
+          previousLabel: source.trend.previousLabel || source.trend.previous_period || '',
+          maxAbs: Math.max(
+            Math.abs(toNumber(source.trend.currentValue ?? source.trend.current_value)),
+            Math.abs(toNumber(source.trend.previousValue ?? source.trend.previous_value)),
+            1
+          ),
+        } : null
+
+        const composition = source.composition ? {
+          currentLabel: source.composition.currentLabel || source.composition.current_period || '',
+          afterTaxCharge: toNumber(source.composition.afterTaxCharge ?? source.composition.after_tax_charge),
+          directCostAdjusted: toNumber(source.composition.directCostAdjusted ?? source.composition.direct_cost_adjusted),
+          allocatedCost: toNumber(source.composition.allocatedCost ?? source.composition.allocated_cost),
+          totalCost: toNumber(source.composition.totalCost ?? source.composition.total_cost),
+          profitValue: toNumber(source.composition.profitValue ?? source.composition.profit_value),
+        } : null
+
+        return { trend, composition }
+      }
+      return null
+    }
+
+    const isNegativeTrendSupported = (issue) => !!getNegativeTrend(issue)
+
+    const isDepartmentProfitCompositionSupported = (issue) => !!getDepartmentProfitComposition(issue)
+
+    const isNegativeVisualLoading = (issue) => {
+      const issueKey = getNegativeIssueKey(issue)
+      return !!negativeVisualLoading.value[issueKey]
+    }
+
+    const getNegativeTrend = (issue) => getNegativeVisual(issue)?.trend || null
+
+    const isNegativeTrendCrossToLoss = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return false
+      return toNumber(trend.previousValue) > 0 && toNumber(trend.currentValue) < 0
+    }
+
+    const getNegativeTrendCrossZeroPercent = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 50
+      const previousProfit = Math.max(0, toNumber(trend.previousValue))
+      const currentLoss = Math.max(0, Math.abs(toNumber(trend.currentValue)))
+      const total = previousProfit + currentLoss
+      if (total <= 0) return 50
+      return Math.round(clampPercent((previousProfit / total) * 100) * 10) / 10
+    }
+
+    const getNegativeTrendCrossProfitTrackStyle = (issue) => {
+      const zeroPercent = getNegativeTrendCrossZeroPercent(issue)
+      return {
+        left: '0%',
+        width: `${zeroPercent}%`,
+      }
+    }
+
+    const getNegativeTrendCrossLossTrackStyle = (issue) => {
+      const zeroPercent = getNegativeTrendCrossZeroPercent(issue)
+      return {
+        left: `${zeroPercent}%`,
+        right: '0%',
+      }
+    }
+
+    const getNegativeTrendCrossZeroLineStyle = (issue) => {
+      const zeroPercent = getNegativeTrendCrossZeroPercent(issue)
+      return {
+        left: `calc(${zeroPercent}% - 1px)`,
+      }
+    }
+
+    const getNegativeTrendStatus = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return '暂无数据'
+
+      if (trend.previousValue >= 0 && trend.currentValue < 0) return '由盈转亏'
+      if (trend.previousValue < 0 && trend.currentValue >= 0) return '转正'
+
+      const diffAbs = Math.abs(Math.abs(trend.currentValue) - Math.abs(trend.previousValue))
+      if (diffAbs < 0.05) return '基本持平'
+      return Math.abs(trend.currentValue) > Math.abs(trend.previousValue) ? '亏损扩大' : '亏损收窄'
+    }
+
+    const getNegativeTrendDeltaLabel = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return '-'
+
+      const status = getNegativeTrendStatus(issue)
+      if (status === '基本持平') return '较上月基本持平'
+      if (status === '由盈转亏') return `较上月转负 ${formatNumber(Math.abs(trend.changeValue))}`
+      if (status === '转正') return `较上月转正 ${formatNumber(Math.abs(trend.changeValue))}`
+      return `${status} ${formatNumber(Math.abs(trend.changeValue))}`
+    }
+
+    const getNegativeTrendBaseAbs = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 1
+      return Math.max(
+        Math.abs(toNumber(trend.previousValue)),
+        Math.abs(toNumber(trend.currentValue)),
+        1
+      )
+    }
+
+    const getNegativeTrendBaseValue = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 0
+      return getNegativeTrendBaseAbs(issue)
+    }
+
+    const getNegativeTrendPreviousRatioPercent = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 0
+      const baseAbs = getNegativeTrendBaseAbs(issue)
+      const ratio = (Math.abs(toNumber(trend.previousValue)) / baseAbs) * 100
+      return Math.round(clampPercent(ratio) * 10) / 10
+    }
+
+    const getNegativeTrendCurrentRatioPercent = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 0
+      const baseAbs = getNegativeTrendBaseAbs(issue)
+      const ratio = (Math.abs(toNumber(trend.currentValue)) / baseAbs) * 100
+      return Math.round(clampPercent(ratio) * 10) / 10
+    }
+
+    const getNegativeTrendExpandedPercent = (issue) => {
+      const expanded = getNegativeTrendCurrentRatioPercent(issue) - getNegativeTrendPreviousRatioPercent(issue)
+      if (expanded <= 0) return 0
+      return Math.round(expanded * 10) / 10
+    }
+
+    const getNegativeTrendNarrowedPercent = (issue) => {
+      const narrowed = getNegativeTrendPreviousRatioPercent(issue) - getNegativeTrendCurrentRatioPercent(issue)
+      if (narrowed <= 0) return 0
+      return Math.round(narrowed * 10) / 10
+    }
+
+    const getNegativeTrendNarrowedStyle = (issue) => {
+      const currentPercent = getNegativeTrendCurrentRatioPercent(issue)
+      const previousPercent = getNegativeTrendPreviousRatioPercent(issue)
+      const rightPercent = clampPercent(100 - previousPercent)
+      return {
+        left: `${currentPercent}%`,
+        right: `${rightPercent}%`,
+      }
+    }
+
+    const getNegativeTrendExpandedStyle = (issue) => {
+      const previousPercent = getNegativeTrendPreviousRatioPercent(issue)
+      const currentPercent = getNegativeTrendCurrentRatioPercent(issue)
+      const rightPercent = clampPercent(100 - currentPercent)
+      return {
+        left: `${previousPercent}%`,
+        right: `${rightPercent}%`,
+      }
+    }
+
+    const getNegativeTrendBaselineLabel = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return '基准（100%）'
+      return getNegativeTrendExpandedPercent(issue) > 0
+        ? `${trend.currentLabel}基准（100%）`
+        : `${trend.previousLabel}基准（100%）`
+    }
+
+    const getDepartmentProfitComposition = (issue) => getNegativeVisual(issue)?.composition || null
+
+    const getDepartmentCompositionRevenueMarker = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '0%'
+      const base = Math.max(toNumber(composition.totalCost), 1)
+      return `${clampPercent((toNumber(composition.afterTaxCharge) / base) * 100)}%`
+    }
+
+    const getDepartmentCompositionCostMarker = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '0%'
+      const base = Math.max(toNumber(composition.totalCost), 1)
+      return `${clampPercent((toNumber(composition.totalCost) / base) * 100)}%`
+    }
+
+    const getDepartmentCompositionSegmentWidth = (issue, field) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '0%'
+      const base = Math.max(toNumber(composition.totalCost), 1)
+      if (field === 'directCostAdjusted') return `${clampPercent((toNumber(composition.directCostAdjusted) / base) * 100)}%`
+      if (field === 'allocatedCost') return `${clampPercent((toNumber(composition.allocatedCost) / base) * 100)}%`
+      return '0%'
+    }
+
+    const getDepartmentCompositionLossRangeStyle = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return { display: 'none' }
+      const base = Math.max(toNumber(composition.totalCost), 1)
+      const revenuePercent = clampPercent((toNumber(composition.afterTaxCharge) / base) * 100)
+      const left = revenuePercent
+      const width = clampPercent(100 - revenuePercent)
+      return {
+        left: `${left}%`,
+        width: `${width}%`,
+      }
+    }
+
+    const getDepartmentCompositionRevenueRangeStyle = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return { display: 'none' }
+      const base = Math.max(toNumber(composition.totalCost), 1)
+      const width = clampPercent((toNumber(composition.afterTaxCharge) / base) * 100)
+      return {
+        left: '0%',
+        width: `${width}%`,
+      }
+    }
+
+    const getDepartmentCompositionRevenueLabelMarker = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '0%'
+      const revenuePercent = parseFloat(getDepartmentCompositionRevenueMarker(issue)) || 0
+      return `${clampPercent(revenuePercent / 2)}%`
+    }
+
+    const getDepartmentCompositionLossLabelMarker = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '50%'
+      const revenuePercent = parseFloat(getDepartmentCompositionRevenueMarker(issue)) || 0
+      const midpoint = revenuePercent + ((100 - revenuePercent) / 2)
+      return `${clampPercent(midpoint)}%`
+    }
+
+    const getDepartmentCompositionResultLabel = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return '结果'
+      return toNumber(composition.profitValue) >= 0 ? '盈利' : '亏损'
+    }
+
+    const getDepartmentCompositionResultValue = (issue) => {
+      const composition = getDepartmentProfitComposition(issue)
+      if (!composition) return 0
+      return Math.abs(toNumber(composition.profitValue))
     }
 
     const declineIssues = computed(() => {
@@ -710,9 +1158,7 @@ export default {
         const list = rawData.value.issues.yoy_decline[level] || []
         list.forEach((item) => {
           if (level === 'unit' && item.org_id === 2) return
-          const orgType = level === 'department_total' ? 'department_total' : item.org_type
-          const orgName = level === 'department_total' ? '公司本部' : item.org_name
-          issues.push({ ...item, type: 'decline', org_type: orgType, org_name: orgName })
+          issues.push(normalizeIssueRecord(item, level, 'decline'))
         })
       }
       return issues.sort((a, b) => {
@@ -731,9 +1177,7 @@ export default {
         const list = rawData.value.issues.behind_schedule[level] || []
         list.forEach((item) => {
           if (level === 'unit' && item.org_id === 2) return
-          const orgType = level === 'department_total' ? 'department_total' : item.org_type
-          const orgName = level === 'department_total' ? '公司本部' : item.org_name
-          issues.push({ ...item, type: 'behind', org_type: orgType, org_name: orgName })
+          issues.push(normalizeIssueRecord(item, level, 'behind'))
         })
       }
       return issues.sort((a, b) => {
@@ -751,17 +1195,18 @@ export default {
       for (const level of levels) {
         const list = rawData.value.issues.negative_profit[level] || []
         list.forEach((item) => {
-          if (level === 'unit' && item.org_id === 2) return
-          const orgType = level === 'department_total' ? 'department_total' : item.org_type
-          const orgName = level === 'department_total' ? '公司本部' : item.org_name
-          issues.push({ ...item, type: 'negative', org_type: orgType, org_name: orgName })
+          issues.push(normalizeIssueRecord(item, level, 'negative'))
         })
       }
       return issues.sort((a, b) => {
+        const levelA = Number(a.org_level)
+        const levelB = Number(b.org_level)
+        if (levelA !== levelB) return levelA - levelB
         if (typeOrder[a.org_type] !== typeOrder[b.org_type]) return typeOrder[a.org_type] - typeOrder[b.org_type]
+        if (a.metric !== b.metric) return a.metric.localeCompare(b.metric, 'zh-CN')
         if (a.profit_value !== b.profit_value) return a.profit_value - b.profit_value
         if (a.org_name !== b.org_name) return a.org_name.localeCompare(b.org_name, 'zh-CN')
-        return a.metric.localeCompare(b.metric, 'zh-CN')
+        return 0
       })
     })
 
@@ -840,6 +1285,7 @@ export default {
       handleClick,
       openIssueModalByType,
       formatNumber,
+      toNumber,
       tooltip,
       detailModal,
       modalIssues,
@@ -858,8 +1304,34 @@ export default {
       getBehindCurrentPercent,
       getDeclineCurrentPercent,
       getDeclineBaselinePercent,
-      getNegativeWorstLossValue,
-      getNegativeLossSeverityPercent,
+      isNegativeTrendSupported,
+      getNegativeTrend,
+      isNegativeTrendCrossToLoss,
+      getNegativeTrendCrossProfitTrackStyle,
+      getNegativeTrendCrossLossTrackStyle,
+      getNegativeTrendCrossZeroLineStyle,
+      getNegativeTrendStatus,
+      getNegativeTrendDeltaLabel,
+      getNegativeTrendBaseValue,
+      getNegativeTrendBaselineLabel,
+      getNegativeTrendPreviousRatioPercent,
+      getNegativeTrendCurrentRatioPercent,
+      getNegativeTrendExpandedPercent,
+      getNegativeTrendNarrowedPercent,
+      getNegativeTrendNarrowedStyle,
+      getNegativeTrendExpandedStyle,
+      isNegativeVisualLoading,
+      isDepartmentProfitCompositionSupported,
+      getDepartmentProfitComposition,
+      getDepartmentCompositionRevenueMarker,
+      getDepartmentCompositionCostMarker,
+      getDepartmentCompositionSegmentWidth,
+      getDepartmentCompositionRevenueRangeStyle,
+      getDepartmentCompositionRevenueLabelMarker,
+      getDepartmentCompositionLossRangeStyle,
+      getDepartmentCompositionLossLabelMarker,
+      getDepartmentCompositionResultLabel,
+      getDepartmentCompositionResultValue,
       handleEnter,
       handleLeave,
       getTooltipLabel,
@@ -917,5 +1389,351 @@ export default {
 .modal-pop-enter-active > div,
 .modal-pop-leave-active > div {
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+}
+
+.trend-impact-zone {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.45) 0%, rgba(239, 68, 68, 0.45) 100%);
+  animation: trend-impact-zone-pulse-v2 0.9s ease-in-out infinite;
+}
+
+.trend-impact-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 2;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.95) 0%, rgba(249, 115, 22, 0.98) 100%);
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.45);
+  animation: trend-impact-grow-fill-v2 0.95s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.trend-impact-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -8px;
+  width: 16px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.15) 70%, rgba(255, 255, 255, 0) 100%);
+  filter: blur(0.6px);
+}
+
+.trend-impact-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 10px,
+    rgba(255, 255, 255, 0.35) 10px,
+    rgba(255, 255, 255, 0.35) 16px
+  );
+  animation: trend-impact-stripe-v2 0.45s linear infinite;
+}
+
+@keyframes trend-impact-grow-fill-v2 {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.25;
+  }
+  65% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.45;
+  }
+}
+
+@keyframes trend-impact-stripe-v2 {
+  to {
+    transform: translateX(24px);
+  }
+}
+
+@keyframes trend-impact-zone-pulse-v2 {
+  0% {
+    filter: brightness(0.95);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+  100% {
+    filter: brightness(0.95);
+  }
+}
+
+.loss-narrowed-zone {
+  position: absolute;
+  overflow: hidden;
+}
+
+.cross-to-loss-profit-track,
+.cross-to-loss-loss-track {
+  position: absolute;
+  overflow: hidden;
+}
+
+.cross-to-loss-profit-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.95) 0%, rgba(52, 211, 153, 0.9) 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  animation: cross-to-loss-profit-reduce-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.cross-to-loss-profit-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -34%;
+  width: 34%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.88) 56%, rgba(167, 243, 208, 0.3) 100%);
+  filter: blur(0.4px);
+  animation: cross-to-loss-profit-sweep-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.cross-to-loss-loss-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(244, 63, 94, 0.92) 0%, rgba(239, 68, 68, 0.95) 100%);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.36);
+  animation: cross-to-loss-loss-grow-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.cross-to-loss-loss-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -34%;
+  width: 34%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0.9) 56%, rgba(251, 113, 133, 0.28) 100%);
+  filter: blur(0.4px);
+  animation: cross-to-loss-loss-sweep-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.loss-expanded-zone {
+  position: absolute;
+  overflow: hidden;
+}
+
+.loss-expanded-grow-sync {
+  will-change: clip-path, opacity;
+  animation: loss-expanded-grow-right 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
+.loss-expanded-zone::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: repeating-linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 10px,
+    rgba(255, 255, 255, 0.2) 10px,
+    rgba(255, 255, 255, 0.2) 16px
+  );
+  animation: loss-expanded-stripe-shift 1.2s linear infinite;
+}
+
+.loss-expanded-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -42%;
+  width: 42%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0.84) 55%, rgba(251, 113, 133, 0.26) 100%);
+  filter: blur(0.4px);
+  animation: loss-expanded-sweep-right 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
+.loss-narrowed-shrink-sync {
+  will-change: clip-path, opacity;
+  animation: loss-narrowed-shrink-right 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
+.loss-narrowed-zone::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: repeating-linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 10px,
+    rgba(255, 255, 255, 0.22) 10px,
+    rgba(255, 255, 255, 0.22) 16px
+  );
+  animation: loss-narrowed-stripe-shift 1.2s linear infinite;
+}
+
+.loss-narrowed-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -42%;
+  width: 42%;
+  border-radius: 9999px;
+  background: linear-gradient(270deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.82) 45%, rgba(45, 212, 191, 0.26) 100%);
+  filter: blur(0.4px);
+  animation: loss-narrowed-sweep-left 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
+@keyframes loss-narrowed-sweep-left {
+  0% {
+    transform: translateX(0);
+    opacity: 0.16;
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(-260%);
+    opacity: 0;
+  }
+}
+
+@keyframes loss-narrowed-shrink-right {
+  0% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+  20% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+  100% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+}
+
+@keyframes loss-expanded-grow-right {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+  20% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+}
+
+@keyframes loss-expanded-sweep-right {
+  0% {
+    transform: translateX(0);
+    opacity: 0.16;
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(260%);
+    opacity: 0;
+  }
+}
+
+@keyframes cross-to-loss-profit-reduce-right {
+  0% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+  42% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+  58% {
+    clip-path: inset(0 0 0 100%);
+    opacity: 0.2;
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+    opacity: 0;
+  }
+}
+
+@keyframes cross-to-loss-profit-sweep-right {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  58% {
+    transform: translateX(285%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(285%);
+    opacity: 0;
+  }
+}
+
+@keyframes cross-to-loss-loss-grow-right {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  52% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 0.95;
+  }
+}
+
+@keyframes cross-to-loss-loss-sweep-right {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  56% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.92;
+  }
+  100% {
+    transform: translateX(285%);
+    opacity: 0;
+  }
+}
+
+@keyframes loss-narrowed-stripe-shift {
+  to {
+    transform: translateX(-18px);
+  }
+}
+
+@keyframes loss-expanded-stripe-shift {
+  to {
+    transform: translateX(18px);
+  }
 }
 </style>

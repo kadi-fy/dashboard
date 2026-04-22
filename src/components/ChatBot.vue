@@ -174,8 +174,22 @@
               </div>
               
               <!-- 图表展示 -->
-              <div v-if="msg.chartData && msg.chartData.data && msg.chartData.data.length > 0" class="message-chart mt-3">
-                <DynamicChart :chart-config="msg.chartData" />
+              <div v-if="hasRenderableChart(msg.chartData)" class="message-chart mt-3">
+                <template v-if="isDashboardChart(msg.chartData)">
+                  <div class="chart-dashboard-grid">
+                    <div
+                      v-for="(chart, chartIdx) in msg.chartData.charts"
+                      :key="`chart-${chartIdx}`"
+                      class="chart-dashboard-card"
+                    >
+                      <p class="chart-dashboard-title">{{ chart.title || `图表${chartIdx + 1}` }}</p>
+                      <DynamicChart :chart-config="chart" />
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <DynamicChart :chart-config="msg.chartData" />
+                </template>
               </div>
               
               <!-- 数据表格 -->
@@ -529,30 +543,106 @@ export default {
         .replace(/'/g, '&#39;')
     }
 
-    const normalizeChartConfig = (config) => {
+    const normalizeSingleChartConfig = (config) => {
       if (!config) return null
-
-      const hasSeries = Array.isArray(config.series) && config.series.length > 0
+      const hasSeries = Array.isArray(config.series) && config.series.some(item => Array.isArray(item.data) && item.data.length > 0)
       const hasData = Array.isArray(config.data) && config.data.length > 0
       if (!hasSeries && !hasData) {
         return null
       }
-      
+
       const normalized = { ...config }
       if (Array.isArray(normalized.labels)) {
         normalized.labels = normalized.labels.map(normalizeMonthLabel)
       }
-      if (normalized.series && Array.isArray(normalized.series)) {
+      if (Array.isArray(normalized.series)) {
         normalized.series = normalized.series.map(series => ({
           ...series,
-          name: series.name || '数值'
+          name: series.name || '数值',
         }))
       }
       return normalized
     }
 
+    const normalizeChartConfig = (config) => {
+      if (!config) return null
+
+      if (config.type === 'dashboard' && Array.isArray(config.charts)) {
+        const charts = config.charts
+          .map(normalizeSingleChartConfig)
+          .filter(Boolean)
+
+        if (!charts.length) {
+          return null
+        }
+
+        return {
+          ...config,
+          charts,
+        }
+      }
+
+      return normalizeSingleChartConfig(config)
+    }
+
+    const isDashboardChart = (chartConfig) => {
+      return !!(chartConfig && chartConfig.type === 'dashboard' && Array.isArray(chartConfig.charts))
+    }
+
+    const hasRenderableChart = (chartConfig) => {
+      if (!chartConfig) return false
+      if (isDashboardChart(chartConfig)) {
+        return chartConfig.charts.length > 0
+      }
+      const hasSeries = Array.isArray(chartConfig.series) && chartConfig.series.some(item => Array.isArray(item.data) && item.data.length > 0)
+      const hasData = Array.isArray(chartConfig.data) && chartConfig.data.length > 0
+      return hasSeries || hasData
+    }
+
     const normalizeTableData = (data) => {
       if (!Array.isArray(data) || data.length === 0) return []
+
+      const columnLabelMap = {
+        metric_key: '指标编码',
+        metric_label: '指标名称',
+        current_value: '本期值',
+        base_value: '基期值',
+        change_value: '变化值',
+        change_rate: '变化率(%)',
+        org_name: '组织',
+        value: '数值',
+        year: '年份',
+        month: '月份',
+        month_number: '月份',
+        year_month: '年月',
+      }
+
+      const metricKeyLabelMap = {
+        revenue: '收入',
+        profit: '利润',
+        net_contract: '净合同',
+        net_charge: '净收费',
+        cost: '成本',
+        charge_per: '人均收费',
+        profit_per: '人均利润',
+        earning: '收费口径利润',
+      }
+
+      const normalizeCellValue = (key, value) => {
+        if (key === 'metric_key') {
+          return metricKeyLabelMap[String(value)] || value
+        }
+        return value
+      }
+
+      const remapRowKeys = (row) => {
+        const remapped = {}
+        for (const [key, value] of Object.entries(row)) {
+          const mappedKey = columnLabelMap[key] || key
+          remapped[mappedKey] = normalizeCellValue(key, value)
+        }
+        return remapped
+      }
       
       const timeFields = ['month_name', 'month', 'month_number', 'year_month', 'year', 'date', 'actual_date']
       
@@ -561,14 +651,14 @@ export default {
         
         // 如果行只有1个字段（聚合结果：如公司利润总额），直接返回原始行
         if (rowKeys.length === 1) {
-          return row
+          return remapRowKeys(row)
         }
         
         // 检查是否有时间字段
         const hasTimeField = rowKeys.some(k => timeFields.includes(k))
         if (!hasTimeField) {
-          // 没有时间字段，保持原始数据结构
-          return row
+          // 没有时间字段，仅做字段中文化
+          return remapRowKeys(row)
         }
         
         // 有时间字段，进行时间归一化，保留其他字段的原始名称
@@ -606,7 +696,8 @@ export default {
         // 保留所有非时间字段的原始名称和值
         for (const key of rowKeys) {
           if (!timeFields.includes(key)) {
-            newRow[key] = row[key]
+            const mappedKey = columnLabelMap[key] || key
+            newRow[mappedKey] = normalizeCellValue(key, row[key])
           }
         }
         
@@ -860,6 +951,8 @@ export default {
       formatRating,
       barStyle,
       issueBarStyle,
+      isDashboardChart,
+      hasRenderableChart,
       getCurrentPage,
       goToPage,
       getPaginatedTableData
@@ -1036,6 +1129,32 @@ export default {
   font-size: 0.7rem;
   color: #64748b;
   margin-bottom: 0.35rem;
+}
+
+.chart-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.chart-dashboard-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.5rem;
+  background: #f8fafc;
+}
+
+.chart-dashboard-title {
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 1024px) {
+  .chart-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .stats-value {

@@ -29,7 +29,7 @@
 
     <DepartmentLineMetricCard
       title="部门人均收费/合同"
-      subtitle="DEPARTMENT PER CAPITA CHARGE"
+      subtitle="DEPARTMENT PER CAPITA CHARGE / CONTRACT"
       metric-key="charge_per"
       secondary-metric-key="contract_per"
       primary-label="人均收费"
