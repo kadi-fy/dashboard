@@ -291,7 +291,7 @@
         <div class="chatbot-input">
           <textarea v-model="currentQuestion" 
             @keydown.enter.prevent="sendMessage(currentQuestion)"
-            placeholder="输入您的问题，例如：查询2025年12月各部门利润..."
+            :placeholder="inputPlaceholder"
             rows="2"
             class="input-field"
             :disabled="isLoading"></textarea>
@@ -357,7 +357,7 @@
 </template>
 
 <script>
-import { ref, reactive, nextTick, onMounted } from 'vue'
+import { computed, ref, reactive, nextTick, onMounted } from 'vue'
 import axios from 'axios'
 import DynamicChart from './DynamicChart.vue'
 import { GLOBAL_CONFIG } from '../utils/Utils'
@@ -371,11 +371,11 @@ export default {
   props: {
     currentYear: {
       type: Number,
-      default: 2025
+      default: () => new Date().getFullYear()
     },
     currentMonth: {
       type: Number,
-      default: 12
+      default: () => new Date().getMonth() + 1
     }
   },
   setup(props) {
@@ -399,6 +399,7 @@ export default {
     const feedbackRating = ref(5)
     const feedbackComment = ref('')
     const correctedSql = ref('');
+    const inputPlaceholder = computed(() => `输入您的问题，例如：查询${props.currentYear}年${props.currentMonth}月各部门利润...`)
     
     // 分页相关的消息页码映射（需响应式，否则切页后视图不更新）
     const messagePaginationMap = reactive(new Map())
@@ -474,8 +475,8 @@ export default {
       } catch (error) {
         console.error('获取建议失败:', error)
         suggestions.value = [
-          "2025年12月的公司利润总额是多少？",
-          "2025年各月份营业收入趋势如何？"
+          `${props.currentYear}年${props.currentMonth}月的公司利润总额是多少？`,
+          `${props.currentYear}年各月份营业收入趋势如何？`
         ]
       }
     }
@@ -922,6 +923,7 @@ export default {
       isLoading,
       messages,
       currentQuestion,
+      inputPlaceholder,
       sessionId,
       suggestions,
       messagesContainer,

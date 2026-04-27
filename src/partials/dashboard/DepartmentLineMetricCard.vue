@@ -18,7 +18,21 @@
           <p class="text-[10px] tracking-[0.2em] uppercase" :class="subtitleClass">{{ subtitle }}</p>
         </div>
       </div>
-      <div class="hidden md:flex items-center gap-1.5" aria-hidden="true">
+      <div
+        v-if="secondaryMetricKey"
+        class="hidden md:flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-900/45 rounded-full px-3 py-1 ring-1 backdrop-blur-sm"
+        :class="headerTheme.signalFrameClass"
+      >
+        <span class="flex items-center gap-1">
+          <i class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: primaryColor }"></i>
+          {{ primaryLabel || title }}
+        </span>
+        <span class="flex items-center gap-1">
+          <i class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: secondaryColor }"></i>
+          {{ secondaryLabel || '第二指标' }}
+        </span>
+      </div>
+      <div v-else class="hidden md:flex items-center gap-1.5" aria-hidden="true">
         <span class="h-2 w-2 rounded-full ring-2 ring-white/70 dark:ring-slate-900/60" :class="headerTheme.signalDotClass"></span>
         <span class="h-1.5 w-8 rounded-full" :class="headerTheme.signalBarClass"></span>
         <span class="h-1.5 w-4 rounded-full opacity-70" :class="headerTheme.signalBarClass"></span>
@@ -100,7 +114,7 @@ const headerTheme = computed(() => {
       iconFrameClass: 'ring-cyan-300/35 dark:ring-cyan-400/25 shadow-[0_0_14px_rgba(34,211,238,0.2)] dark:shadow-[0_0_18px_rgba(56,189,248,0.14)]',
       signalDotClass: 'bg-cyan-400/90 dark:bg-cyan-300/85',
       signalBarClass: 'bg-cyan-400/75 dark:bg-cyan-300/65',
-      signalFrameClass: 'border-cyan-200/70 dark:border-cyan-400/30 text-cyan-600 dark:text-cyan-300 bg-white/55 dark:bg-slate-900/45',
+      signalFrameClass: 'ring-cyan-200/70 dark:ring-cyan-400/30',
     },
     'line-cost-per': {
       headerClass: 'border-amber-100/80 dark:border-amber-500/20 bg-gradient-to-r from-slate-50 via-amber-50/70 to-orange-50/75 dark:from-slate-900/85 dark:via-amber-950/25 dark:to-slate-900/70',
@@ -110,7 +124,7 @@ const headerTheme = computed(() => {
       iconFrameClass: 'ring-amber-300/35 dark:ring-amber-400/25 shadow-[0_0_14px_rgba(251,191,36,0.2)] dark:shadow-[0_0_18px_rgba(245,158,11,0.14)]',
       signalDotClass: 'bg-amber-400/90 dark:bg-amber-300/85',
       signalBarClass: 'bg-amber-400/75 dark:bg-amber-300/65',
-      signalFrameClass: 'border-amber-200/70 dark:border-amber-400/30 text-amber-600 dark:text-amber-300 bg-white/55 dark:bg-slate-900/45',
+      signalFrameClass: 'ring-amber-200/70 dark:ring-amber-400/30',
     },
     'line-profit-per': {
       headerClass: 'border-emerald-100/80 dark:border-emerald-500/20 bg-gradient-to-r from-slate-50 via-emerald-50/70 to-teal-50/75 dark:from-slate-900/85 dark:via-emerald-950/25 dark:to-slate-900/70',
@@ -120,7 +134,7 @@ const headerTheme = computed(() => {
       iconFrameClass: 'ring-emerald-300/35 dark:ring-emerald-400/25 shadow-[0_0_14px_rgba(52,211,153,0.2)] dark:shadow-[0_0_18px_rgba(16,185,129,0.14)]',
       signalDotClass: 'bg-emerald-400/90 dark:bg-emerald-300/85',
       signalBarClass: 'bg-emerald-400/75 dark:bg-emerald-300/65',
-      signalFrameClass: 'border-emerald-200/70 dark:border-emerald-400/30 text-emerald-600 dark:text-emerald-300 bg-white/55 dark:bg-slate-900/45',
+      signalFrameClass: 'ring-emerald-200/70 dark:ring-emerald-400/30',
     },
     'line-headcount': {
       headerClass: 'border-indigo-100/80 dark:border-indigo-500/20 bg-gradient-to-r from-slate-50 via-indigo-50/70 to-blue-50/75 dark:from-slate-900/85 dark:via-indigo-950/25 dark:to-slate-900/70',
@@ -130,7 +144,7 @@ const headerTheme = computed(() => {
       iconFrameClass: 'ring-indigo-300/35 dark:ring-indigo-400/25 shadow-[0_0_14px_rgba(129,140,248,0.2)] dark:shadow-[0_0_18px_rgba(99,102,241,0.14)]',
       signalDotClass: 'bg-indigo-400/90 dark:bg-indigo-300/85',
       signalBarClass: 'bg-indigo-400/75 dark:bg-indigo-300/65',
-      signalFrameClass: 'border-indigo-200/70 dark:border-indigo-400/30 text-indigo-600 dark:text-indigo-300 bg-white/55 dark:bg-slate-900/45',
+      signalFrameClass: 'ring-indigo-200/70 dark:ring-indigo-400/30',
     },
   }
 
@@ -203,7 +217,7 @@ const renderChart = () => {
       easing: 'easeOutCubic',
     },
     plugins: {
-      legend: { display: !!props.secondaryMetricKey, position: 'top' },
+      legend: { display: false },
       tooltip: {
         callbacks: {
           label: (context) => {
@@ -229,6 +243,15 @@ const renderChart = () => {
       y: {
         beginAtZero: true,
         grid: { color: '#eef2f7' },
+        title: {
+          display: !!props.unitLabel,
+          text: props.unitLabel,
+          color: '#64748b',
+          font: {
+            size: 12,
+            weight: '600',
+          },
+        },
       },
       x: {
         ticks: { maxRotation: 20, minRotation: 20, color: '#475569' },

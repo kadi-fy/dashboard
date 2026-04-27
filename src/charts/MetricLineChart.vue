@@ -160,7 +160,7 @@ export default {
         mode: 'nearest',
       },
       maintainAspectRatio: false,
-      resizeDelay: 200,
+      resizeDelay: 0,
     }))
 
     const renderChart = () => {

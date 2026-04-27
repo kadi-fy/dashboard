@@ -11,23 +11,23 @@
         <div class="marquee-content absolute whitespace-nowrap flex items-center" :style="{ animationDuration: declineDuration + 's', animationPlayState: declinePaused ? 'paused' : 'running' }">
           <span class="inline-flex items-center space-x-4 pr-4">
             <template v-if="declineIssues.length > 0">
-              <span v-for="(issue, index) in declineIssues" :key="'dec-' + index" ref="declineRefs" class="group/item cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('decline', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
+              <span v-for="(issue, index) in declineIssues" :key="'dec-' + index" ref="declineRefs" class="group/item relative z-10 cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('decline', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
                 <span class="text-xs text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 inline-flex items-center">
                   <span class="font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                   <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                  <span class="truncate mr-1 hidden sm:inline">{{ issue.metric }}</span>
+                  <span class="truncate mr-1 hidden sm:inline font-medium text-orange-700 dark:text-orange-300">{{ issue.metric }}</span>
                   <span class="text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded text-[10px] border border-orange-100 dark:border-orange-900/30">{{ issue.decline_percent }}</span>
                 </span>
               </span>
             </template>
             <span v-else class="text-xs text-gray-400 pl-2">暂无下滑数据</span>
           </span>
-          <span class="inline-flex items-center space-x-4 pr-4" aria-hidden="true">
+          <span class="inline-flex items-center space-x-4 pr-4 pointer-events-none select-none" aria-hidden="true">
             <template v-if="declineIssues.length > 0">
               <span v-for="(issue, index) in declineIssues" :key="'dec-dup-' + index" class="inline-flex items-center px-1.5 py-0.5 rounded">
                 <span class="text-xs text-gray-600 dark:text-gray-400 font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                 <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                <span class="text-xs text-gray-500 truncate mr-1 hidden sm:inline">{{ issue.metric }}</span>
+                <span class="text-xs truncate mr-1 hidden sm:inline font-medium text-orange-700 dark:text-orange-300">{{ issue.metric }}</span>
                 <span class="text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded text-[10px] border border-orange-100 dark:border-orange-900/30">{{ issue.decline_percent }}</span>
               </span>
             </template>
@@ -49,23 +49,23 @@
         <div class="marquee-content absolute whitespace-nowrap flex items-center" :style="{ animationDuration: behindDuration + 's', animationPlayState: behindPaused ? 'paused' : 'running' }">
           <span class="inline-flex items-center space-x-4 pr-4">
             <template v-if="behindIssues.length > 0">
-              <span v-for="(issue, index) in behindIssues" :key="'beh-' + index" ref="behindRefs" class="group/item cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('behind', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
+              <span v-for="(issue, index) in behindIssues" :key="'beh-' + index" ref="behindRefs" class="group/item relative z-10 cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('behind', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
                 <span class="text-xs text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 inline-flex items-center">
                   <span class="font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                   <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                  <span class="truncate mr-1 hidden sm:inline">{{ issue.metric }}</span>
+                  <span class="truncate mr-1 hidden sm:inline font-medium text-red-700 dark:text-red-300">{{ issue.metric }}</span>
                   <span class="text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded text-[10px] border border-red-100 dark:border-red-900/30">{{ issue.completion_rate }}</span>
                 </span>
               </span>
             </template>
             <span v-else class="text-xs text-gray-400 pl-2">无滞后数据</span>
           </span>
-          <span class="inline-flex items-center space-x-4 pr-4" aria-hidden="true">
+          <span class="inline-flex items-center space-x-4 pr-4 pointer-events-none select-none" aria-hidden="true">
             <template v-if="behindIssues.length > 0">
               <span v-for="(issue, index) in behindIssues" :key="'beh-dup-' + index" class="inline-flex items-center px-1.5 py-0.5 rounded">
                 <span class="text-xs text-gray-600 dark:text-gray-400 font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                 <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-                <span class="text-xs text-gray-500 truncate mr-1 hidden sm:inline">{{ issue.metric }}</span>
+                <span class="text-xs truncate mr-1 hidden sm:inline font-medium text-red-700 dark:text-red-300">{{ issue.metric }}</span>
                 <span class="text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded text-[10px] border border-red-100 dark:border-red-900/30">{{ issue.completion_rate }}</span>
               </span>
             </template>
@@ -87,7 +87,7 @@
         <div class="marquee-content absolute whitespace-nowrap flex items-center" :style="{ animationDuration: negativeDuration + 's', animationPlayState: negativePaused ? 'paused' : 'running' }">
           <span class="inline-flex items-center space-x-4 pr-4">
             <template v-if="negativeIssues.length > 0">
-              <span v-for="(issue, index) in negativeIssues" :key="'neg-' + index" ref="negativeRefs" class="group/item cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('negative', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
+              <span v-for="(issue, index) in negativeIssues" :key="'neg-' + index" ref="negativeRefs" class="group/item relative z-10 cursor-pointer inline-flex items-center px-1.5 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" @mouseenter="handleEnter('negative', issue, $event)" @mouseleave="handleLeave" @click="handleClick(issue)">
                 <span class="text-xs text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 inline-flex items-center">
                   <span class="font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
                   <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
@@ -101,7 +101,7 @@
             <span v-else class="text-xs text-gray-400 pl-2">无亏损数据</span>
           </span>
 
-          <span class="inline-flex items-center space-x-4 pr-4" aria-hidden="true">
+          <span class="inline-flex items-center space-x-4 pr-4 pointer-events-none select-none" aria-hidden="true">
             <template v-if="negativeIssues.length > 0">
               <span v-for="(issue, index) in negativeIssues" :key="'neg-dup-' + index" class="inline-flex items-center px-1.5 py-0.5 rounded">
                 <span class="text-xs text-gray-600 dark:text-gray-400 font-medium truncate max-w-[80px] sm:max-w-[100px]">{{ issue.org_name }}</span>
@@ -250,7 +250,7 @@
                           <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold tracking-wide border" :class="getOrgTypeBadgeClass(item.org_type, detailModal.type)">{{ getOrgTypeLabel(item) }}</span>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                          <h4 class="text-base font-extrabold bg-clip-text text-transparent leading-snug shrink-0" :class="getOrgNameGradient(detailModal.type)">{{ item.org_name }}</h4>
+                          <h4 class="text-base font-extrabold text-transparent bg-clip-text leading-snug shrink-0" :class="getOrgNameGradient(detailModal.type)">{{ item.org_name }}</h4>
                           <div class="flex items-center gap-1 min-w-0">
                             <span class="inline-block w-1 h-3 rounded-full opacity-60 shrink-0" :class="getOrgNameAccent(detailModal.type)"></span>
                             <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">{{ item.metric }}</p>
@@ -275,9 +275,21 @@
                             :style="{ width: getDeclineBaselinePercent(item) + '%' }"
                           ></div>
                           <div
-                            class="absolute left-0 top-[3px] h-[calc(100%-6px)] rounded-full bg-gradient-to-r from-orange-500 to-rose-500"
+                            v-if="getDeclineReductionWidth(item) > 0"
+                            class="absolute inset-y-0 decline-reduction-zone bg-gradient-to-r from-orange-200/90 via-amber-200/80 to-orange-300/85 dark:from-orange-400/25 dark:via-amber-300/20 dark:to-orange-300/25 decline-reduction-shrink-sync"
+                            :style="{ left: getDeclineCurrentPercent(item) + '%', width: getDeclineReductionWidth(item) + '%' }"
+                          >
+                            <div class="decline-reduction-sweep"></div>
+                          </div>
+                          <div
+                            class="absolute left-0 top-0 h-full rounded-l-full bg-gradient-to-r from-orange-500 to-rose-500"
                             :style="{ width: getDeclineCurrentPercent(item) + '%' }"
-                          ></div>
+                          >
+                            <div
+                              v-if="Number(getDeclineCurrentPercent(item)) > 0"
+                              class="absolute inset-y-0 right-0 w-px bg-white/95 dark:bg-white/80 shadow-[0_0_6px_rgba(255,255,255,0.45)]"
+                            ></div>
+                          </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
@@ -358,7 +370,7 @@
                         <template v-if="getNegativeTrend(item)">
                           <div class="flex items-center justify-between gap-3 text-xs">
                             <span class="text-gray-500 dark:text-gray-400">当月 vs 上月亏损趋势</span>
-                            <span class="px-2 py-0.5 rounded-full border border-indigo-200/80 bg-white/80 text-indigo-700 dark:border-indigo-800/70 dark:bg-slate-900/50 dark:text-indigo-200 font-semibold">
+                            <span class="px-2 py-0.5 rounded-full border bg-white/80 dark:bg-slate-900/50 font-semibold" :class="getNegativeTrendStatusClass(item)">
                               {{ getNegativeTrendStatus(item) }}
                             </span>
                           </div>
@@ -383,10 +395,10 @@
 
                           <div class="space-y-2.5">
                             <div class="flex items-center justify-between text-[11px]">
-                              <span class="text-slate-600 dark:text-slate-300">{{ getNegativeTrendBaselineLabel(item) }}：{{ formatNumber(getNegativeTrendBaseValue(item)) }}</span>
+                              <span class="text-slate-600 dark:text-slate-300">{{ getNegativeTrendLeadingLabel(item) }}：{{ formatNumber(getNegativeTrendLeadingValue(item)) }}</span>
                                 <div class="flex items-center gap-2">
-                                  <span v-if="getNegativeTrendExpandedPercent(item) > 0" class="text-rose-600 dark:text-rose-300 font-semibold">亏损扩大：{{ getNegativeTrendExpandedPercent(item) }}%</span>
-                                  <span v-if="getNegativeTrendNarrowedPercent(item) > 0" class="text-emerald-600 dark:text-emerald-300 font-semibold">亏损收窄：{{ getNegativeTrendNarrowedPercent(item) }}%</span>
+                                  <span v-if="getNegativeTrendExpandedPercent(item) > 0" class="text-orange-600 dark:text-orange-300 font-semibold">亏损扩大：{{ getNegativeTrendExpandedPercent(item) }}%</span>
+                                  <span v-if="getNegativeTrendNarrowedPercent(item) > 0" class="text-cyan-600 dark:text-cyan-300 font-semibold">亏损收窄：{{ getNegativeTrendNarrowedPercent(item) }}%</span>
                                   <span v-else-if="isNegativeTrendCrossToLoss(item)" class="text-rose-600 dark:text-rose-300 font-semibold">由盈转亏</span>
                                   <span v-else-if="getNegativeTrendExpandedPercent(item) <= 0" class="text-slate-600 dark:text-slate-300 font-semibold">基本持平</span>
                                 </div>
@@ -395,7 +407,7 @@
                             <div class="relative h-6 rounded-full overflow-hidden bg-slate-200/90 dark:bg-slate-700/80">
                               <div class="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-slate-400/60 to-slate-500/65 dark:from-slate-500/60 dark:to-slate-400/60"></div>
                               <template v-if="isNegativeTrendCrossToLoss(item)">
-                                <div class="absolute inset-y-0 bg-emerald-500/15 dark:bg-emerald-500/20" :style="getNegativeTrendCrossProfitTrackStyle(item)"></div>
+                                <div class="absolute inset-y-0 bg-indigo-500/15 dark:bg-indigo-400/20" :style="getNegativeTrendCrossProfitTrackStyle(item)"></div>
                                 <div class="absolute inset-y-0 bg-rose-500/15 dark:bg-rose-500/20" :style="getNegativeTrendCrossLossTrackStyle(item)"></div>
                                 <div class="absolute inset-y-0 cross-to-loss-profit-track" :style="getNegativeTrendCrossProfitTrackStyle(item)">
                                   <div class="cross-to-loss-profit-fill"></div>
@@ -407,7 +419,7 @@
                               </template>
                               <template v-else-if="getNegativeTrendExpandedPercent(item) > 0">
                                 <div
-                                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-600"
+                                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500"
                                   :style="{ width: getNegativeTrendPreviousRatioPercent(item) + '%' }"
                                 ></div>
                                 <div
@@ -473,7 +485,7 @@
                               <span>成本构成条（成本合计 {{ formatNumber(getDepartmentProfitComposition(item).totalCost) }}）</span>
                               <div class="flex items-center gap-2.5 text-[10px]">
                                 <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>直接成本</span>
-                                <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>间接成本</span>
+                                <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>共摊成本</span>
                               </div>
                             </div>
                             <div class="relative h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/70">
@@ -843,6 +855,12 @@ export default {
       return lastYear > 0 ? 100 : 0
     }
 
+    const getDeclineReductionWidth = (issue) => {
+      const baseline = Number(getDeclineBaselinePercent(issue)) || 0
+      const current = Number(getDeclineCurrentPercent(issue)) || 0
+      return Math.max(0, Math.round((baseline - current) * 100) / 100)
+    }
+
     const loadNegativeIssueVisual = async (issue) => {
       const issueKey = getNegativeIssueKey(issue)
       if (!issueKey) return
@@ -990,6 +1008,16 @@ export default {
       return Math.abs(trend.currentValue) > Math.abs(trend.previousValue) ? '亏损扩大' : '亏损收窄'
     }
 
+    const getNegativeTrendStatusClass = (issue) => {
+      const status = getNegativeTrendStatus(issue)
+      if (status === '亏损扩大') return 'border-orange-200/80 text-orange-700 dark:border-orange-800/70 dark:text-orange-200'
+      if (status === '亏损收窄') return 'border-cyan-200/80 text-cyan-700 dark:border-cyan-800/70 dark:text-cyan-200'
+      if (status === '由盈转亏') return 'border-rose-200/80 text-rose-700 dark:border-rose-800/70 dark:text-rose-200'
+      if (status === '转正') return 'border-emerald-200/80 text-emerald-700 dark:border-emerald-800/70 dark:text-emerald-200'
+      if (status === '基本持平') return 'border-slate-200/80 text-slate-600 dark:border-slate-700/70 dark:text-slate-300'
+      return 'border-indigo-200/80 text-indigo-700 dark:border-indigo-800/70 dark:text-indigo-200'
+    }
+
     const getNegativeTrendDeltaLabel = (issue) => {
       const trend = getNegativeTrend(issue)
       if (!trend) return '-'
@@ -1063,6 +1091,32 @@ export default {
         left: `${previousPercent}%`,
         right: `${rightPercent}%`,
       }
+    }
+
+    const getNegativeTrendLeadingLabel = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return '基准（100%）'
+
+      if (isNegativeTrendCrossToLoss(issue)) {
+        return `上月盈利（${getNegativeTrendCrossZeroPercent(issue)}%）`
+      }
+      if (getNegativeTrendExpandedPercent(issue) > 0) {
+        return `上月亏损（${getNegativeTrendPreviousRatioPercent(issue)}%）`
+      }
+      if (getNegativeTrendNarrowedPercent(issue) > 0) {
+        return `当月亏损（${getNegativeTrendCurrentRatioPercent(issue)}%）`
+      }
+      return `${trend.previousLabel}基准（100%）`
+    }
+
+    const getNegativeTrendLeadingValue = (issue) => {
+      const trend = getNegativeTrend(issue)
+      if (!trend) return 0
+
+      if (isNegativeTrendCrossToLoss(issue)) return Math.abs(toNumber(trend.previousValue))
+      if (getNegativeTrendExpandedPercent(issue) > 0) return Math.abs(toNumber(trend.previousValue))
+      if (getNegativeTrendNarrowedPercent(issue) > 0) return Math.abs(toNumber(trend.currentValue))
+      return getNegativeTrendBaseValue(issue)
     }
 
     const getNegativeTrendBaselineLabel = (issue) => {
@@ -1304,6 +1358,7 @@ export default {
       getBehindCurrentPercent,
       getDeclineCurrentPercent,
       getDeclineBaselinePercent,
+      getDeclineReductionWidth,
       isNegativeTrendSupported,
       getNegativeTrend,
       isNegativeTrendCrossToLoss,
@@ -1311,8 +1366,11 @@ export default {
       getNegativeTrendCrossLossTrackStyle,
       getNegativeTrendCrossZeroLineStyle,
       getNegativeTrendStatus,
+      getNegativeTrendStatusClass,
       getNegativeTrendDeltaLabel,
       getNegativeTrendBaseValue,
+      getNegativeTrendLeadingLabel,
+      getNegativeTrendLeadingValue,
       getNegativeTrendBaselineLabel,
       getNegativeTrendPreviousRatioPercent,
       getNegativeTrendCurrentRatioPercent,
@@ -1476,6 +1534,47 @@ export default {
   overflow: hidden;
 }
 
+.decline-reduction-zone {
+  position: absolute;
+  overflow: hidden;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+.decline-reduction-zone::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: repeating-linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0) 10px,
+    rgba(255, 255, 255, 0.24) 10px,
+    rgba(255, 255, 255, 0.24) 16px
+  );
+  animation: loss-narrowed-stripe-shift 1.2s linear infinite;
+}
+
+.decline-reduction-shrink-sync {
+  will-change: clip-path, opacity;
+  animation: loss-narrowed-shrink-right 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
+.decline-reduction-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -42%;
+  width: 42%;
+  border-radius: 9999px;
+  background: linear-gradient(270deg, rgba(249, 115, 22, 0.06) 0%, rgba(255, 255, 255, 0.84) 45%, rgba(251, 191, 36, 0.26) 100%);
+  filter: blur(0.4px);
+  animation: loss-narrowed-sweep-left 2.1s cubic-bezier(0.23, 0.85, 0.35, 1) infinite;
+}
+
 .cross-to-loss-profit-track,
 .cross-to-loss-loss-track {
   position: absolute;
@@ -1485,8 +1584,8 @@ export default {
 .cross-to-loss-profit-fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.95) 0%, rgba(52, 211, 153, 0.9) 100%);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.92) 0%, rgba(217, 70, 239, 0.9) 100%);
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
   animation: cross-to-loss-profit-reduce-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
 }
 
@@ -1498,7 +1597,7 @@ export default {
   left: -34%;
   width: 34%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.88) 56%, rgba(167, 243, 208, 0.3) 100%);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(255, 255, 255, 0.88) 56%, rgba(217, 70, 239, 0.3) 100%);
   filter: blur(0.4px);
   animation: cross-to-loss-profit-sweep-right 2.8s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
 }

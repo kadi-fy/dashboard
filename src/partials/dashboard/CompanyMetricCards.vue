@@ -51,7 +51,7 @@
 
   <!-- Modal -->
   <Teleport to="body">
-    <Transition name="modal">
+    <Transition name="modal" @after-enter="onModalAfterEnter">
       <div
         v-if="modalOpen"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, h, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, h } from 'vue'
 import { GLOBAL_CONFIG } from '../../utils/Utils'
 import MetricLineChart from '../../charts/MetricLineChart.vue'
 
@@ -321,7 +321,9 @@ const openModal = async (metric) => {
   activeMetric.value = metric
   modalChartReady.value = false
   modalOpen.value = true
-  await nextTick()
+}
+
+const onModalAfterEnter = () => {
   modalChartReady.value = true
 }
 
@@ -409,7 +411,7 @@ watch([() => props.selectedYear, () => props.selectedMonth], loadData)
 .modal-enter-from .modal-panel,
 .modal-leave-to .modal-panel {
   opacity: 0;
-  transform: translateY(12px) scale(0.98);
+  transform: translateY(12px);
 }
 
 @keyframes orbPulse {

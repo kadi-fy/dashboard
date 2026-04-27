@@ -152,9 +152,21 @@ const barAnnotationPlugin = {
 
       const growth = ((Number(currentValue) - Number(lastValue)) / Math.abs(Number(lastValue))) * 100
       const isUp = growth >= 0
+      const barTop = Math.min(barElement.y, barElement.base)
+      const barBottom = Math.max(barElement.y, barElement.base)
+      const { top: chartTop, bottom: chartBottom } = chartInstance.chartArea
+      const labelGap = 12
+      const safeTop = chartTop + 12
+      const safeBottom = chartBottom - 12
+      const aboveY = Math.max(safeTop, barTop - labelGap)
+      const belowY = Math.min(safeBottom, barBottom + labelGap)
+      // Prefer below for decline text; if there is no room near the axis, fallback above.
+      const growthLabelY = isUp
+        ? aboveY
+        : (barBottom + labelGap <= safeBottom ? belowY : aboveY)
       ctx.font = 'bold 12px sans-serif'
       ctx.fillStyle = isUp ? '#ef4444' : '#10b981'
-      ctx.fillText(`${isUp ? '↑' : '↓'}${Math.abs(growth).toFixed(1)}%`, centerX, barElement.y - 12)
+      ctx.fillText(`${isUp ? '↑' : '↓'}${Math.abs(growth).toFixed(1)}%`, centerX, growthLabelY)
     })
 
     ctx.restore()
