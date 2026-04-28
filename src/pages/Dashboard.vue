@@ -38,20 +38,6 @@
                 <span class="text-slate-500 dark:text-slate-400">加载进度</span>
                 <span class="font-semibold text-slate-700 dark:text-slate-200">{{ bootProgress }}%</span>
               </div>
-
-              <div class="relative z-10 mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div
-                  v-for="(stage, idx) in bootStages"
-                  :key="stage"
-                  class="rounded-xl border px-2.5 py-2 text-center text-[11px] tracking-[0.08em] transition-all duration-300"
-                  :class="idx <= bootStageIndex
-                    ? 'border-sky-300/70 bg-sky-100/70 dark:border-sky-300/45 dark:bg-sky-500/15 text-sky-800 dark:text-sky-200 shadow-[0_8px_20px_rgba(14,165,233,0.18)]'
-                    : 'border-slate-200/70 bg-white/60 dark:border-slate-700/70 dark:bg-slate-900/40 text-slate-400 dark:text-slate-500'"
-                >
-                  {{ stage }}
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
@@ -523,7 +509,6 @@ export default {
       bootProgress,
       bootStatusText,
       performanceFirstMode,
-      bootStages,
       bootStageIndex,
       onMonthPickedStr,
       formatValue,

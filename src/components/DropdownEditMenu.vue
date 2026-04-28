@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <button
       ref="trigger"
@@ -37,6 +37,7 @@
 </template>
 
 <script>
+// 用途：通用编辑菜单下拉容器，提供插槽化菜单与外部点击关闭能力。
 import { ref, onMounted, onUnmounted } from 'vue'
 
 export default {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <Transition name="modal">
       <div
@@ -116,11 +116,21 @@ const departmentName = computed(() => props.departmentDetail[0]?.org_name || '�
 const modalTitle = computed(() => `${departmentName.value} - ${props.metricName}`)
 
 const chartTitle = computed(() => {
-  if (props.metricType === 'cost') return '月度部门成本趋势（万元）'
-  if (props.metricType === 'profit') return '月度部门利润趋势（万元）'
+  if (props.metricType === 'cost') return '月度部门成本趋势'
+  if (props.metricType === 'profit') return '月度部门利润趋势'
   if (props.metricType === 'contract') return '月度净合同趋势（万元）'
   return '月度净收费趋势（万元）'
 })
+
+const unitYAxisTitle = {
+  display: true,
+  text: '万元',
+  color: '#64748b',
+  font: {
+    size: 12,
+    weight: '600',
+  },
+}
 
 const mapByMonth = (rows, field) => {
   const m = new Map(rows.map((item) => [item.time_id % 100, toNum(item[field])]))
@@ -155,16 +165,20 @@ const chargeContractLabelPlugin = {
     ctx.textBaseline = 'middle'
 
     actualMeta.data.forEach((bar, index) => {
-      const actualVal = toNum(actualDs.data[index])
+      const rawActual = actualDs.data[index]
+      const hasActual = rawActual !== null && rawActual !== undefined
+      const actualVal = toNum(rawActual)
       const lastVal = toNum(lastDs.data[index])
       const completion = actualDs.completionRates?.[index]
       const yoy = actualDs.yoyRates?.[index]
 
       // 实际完成柱中金额
-      ctx.fillStyle = '#ffffff'
-      ctx.font = 'bold 11px sans-serif'
-      ctx.fillText(`${Math.round(actualVal)}`, bar.x, bar.y + bar.height / 2 - 5)
-      ctx.fillText('万元', bar.x, bar.y + bar.height / 2 + 9)
+      if (hasActual) {
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 11px sans-serif'
+        ctx.fillText(`${Math.round(actualVal)}`, bar.x, bar.y + bar.height / 2 - 5)
+        ctx.fillText('万元', bar.x, bar.y + bar.height / 2 + 9)
+      }
 
       // 上一年同期柱中金额
       const lastBar = lastMeta.data[index]
@@ -174,7 +188,7 @@ const chargeContractLabelPlugin = {
       }
 
       // 柱顶：完成率
-      if (Number.isFinite(completion)) {
+      if (hasActual && Number.isFinite(completion)) {
         const completionText = `${completion.toFixed(0)}%`
         ctx.fillStyle = '#1f2937'
         ctx.font = 'bold 12px sans-serif'
@@ -182,7 +196,7 @@ const chargeContractLabelPlugin = {
       }
 
       // 完成率上方：同比变化
-      if (Number.isFinite(yoy)) {
+      if (hasActual && Number.isFinite(yoy)) {
         const positive = yoy >= 0
         const symbol = positive ? '↑' : '↓'
         ctx.fillStyle = positive ? '#ef4444' : '#16a34a'
@@ -210,8 +224,7 @@ const costValueLabelPlugin = {
       meta.data.forEach((bar, i) => {
         const value = toNum(dataset.data[i])
         if (value <= 0) return
-        ctx.fillText(`${Math.round(value)}`, bar.x, bar.y + bar.height / 2 - 5)
-        ctx.fillText('万元', bar.x, bar.y + bar.height / 2 + 9)
+        ctx.fillText(`${Math.round(value)}`, bar.x, bar.y + bar.height / 2)
       })
     })
 
@@ -235,10 +248,12 @@ const profitValueLabelPlugin = {
     ctx.font = 'bold 12px sans-serif'
 
     meta.data.forEach((bar, i) => {
-      const value = toNum(ds.data[i])
+      const rawValue = ds.data[i]
+      if (rawValue == null) return
+      const value = toNum(rawValue)
       const y = value >= 0 ? bar.y - 10 : bar.y + 12
       ctx.fillStyle = value >= 0 ? '#16a34a' : '#ef4444'
-      ctx.fillText(`${Math.round(value)}万元`, bar.x, y)
+      ctx.fillText(`${Math.round(value)}`, bar.x, y)
     })
 
     ctx.restore()
@@ -276,7 +291,7 @@ const buildChartConfig = () => {
       },
       options: {
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: '金额 (万元)' } },
+          y: { beginAtZero: true, title: unitYAxisTitle },
           x: { grid: { display: false } },
         },
       },
@@ -296,6 +311,8 @@ const buildChartConfig = () => {
             label: '利润',
             data: profits,
             backgroundColor: (context) => {
+              const rawValue = context.dataset?.data?.[context.dataIndex]
+              if (rawValue == null) return 'rgba(0,0,0,0)'
               const value = toNum(context.parsed?.y)
               return value >= 0 ? 'rgba(76, 175, 80, 0.75)' : 'rgba(244, 67, 54, 0.75)'
             },
@@ -304,7 +321,7 @@ const buildChartConfig = () => {
       },
       options: {
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: '金额 (万元)' } },
+          y: { beginAtZero: true, title: unitYAxisTitle },
           x: { grid: { display: false } },
         },
       },
@@ -319,10 +336,11 @@ const buildChartConfig = () => {
   const values = mapByMonth(currentRows, valueField)
   const lastValues = mapByMonth(lastRows, valueField)
 
-  const plan = toNum(currentRows[0]?.[planField])
-  const monthlyTarget = plan > 0 ? months.value.map((_, i) => (plan / 12) * (i + 1)) : []
-  const completionRates = values.map((v) => (plan > 0 ? (toNum(v) / plan) * 100 : 0))
+  const plan = Math.round(toNum(currentRows[0]?.[planField]))
+  const monthlyTarget = plan > 0 ? months.value.map((_, i) => Math.round((plan * (i + 1)) / 12)) : []
+  const completionRates = values.map((v) => (v == null || plan <= 0 ? null : (toNum(v) / plan) * 100))
   const yoyRates = values.map((v, i) => {
+    if (v == null) return null
     const prev = toNum(lastValues[i])
     if (prev === 0) return null
     return ((toNum(v) - prev) / prev) * 100
@@ -403,6 +421,8 @@ const initChart = () => {
 
   destroyChart()
 
+  const showLegend = (cfg.data?.datasets?.length || 0) > 1
+
   chartInstance = new Chart(ctx, {
     type: cfg.type,
     data: cfg.data,
@@ -410,10 +430,31 @@ const initChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          display: showLegend,
+          position: 'top',
+          labels: {
+            generateLabels: (chart) => {
+              const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart)
+              return defaultLabels.map((label) => {
+                if (label.text === '实际完成') {
+                  return {
+                    ...label,
+                    fillStyle: 'rgba(76, 175, 80, 0.85)',
+                    strokeStyle: 'rgba(76, 175, 80, 1)',
+                  }
+                }
+                return label
+              })
+            },
+          },
+        },
         tooltip: {
           callbacks: {
-            label: (context) => `${context.dataset.label || ''}: ${toNum(context.parsed?.y)} 万元`,
+            label: (context) => {
+              if (context.parsed?.y == null) return null
+              return `${context.dataset.label || ''}: ${toNum(context.parsed?.y)} 万元`
+            },
           },
         },
       },

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="chatbot-container">
     <!-- 悬浮按钮 -->
     <div class="chatbot-toggle" @click="toggleChat" :class="{ active: isOpen }">

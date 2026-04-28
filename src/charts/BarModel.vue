@@ -112,15 +112,15 @@ const barAnnotationPlugin = {
     )
 
     const actualMeta = chartInstance.getDatasetMeta(actualDatasetIndex)
-    const actualData = chartInstance.data.datasets[actualDatasetIndex].data || []
+    const actualData = chartInstance.data.datasets[actualDatasetIndex].data || null
     const lastYearMeta = lastYearDatasetIndex >= 0 ? chartInstance.getDatasetMeta(lastYearDatasetIndex) : null
-    const lastYearData = lastYearDatasetIndex >= 0 ? (chartInstance.data.datasets[lastYearDatasetIndex].data || []) : []
+    const lastYearData = lastYearDatasetIndex >= 0 ? (chartInstance.data.datasets[lastYearDatasetIndex].data || []) : null
 
     const { ctx } = chartInstance
     ctx.save()
 
     actualMeta.data.forEach((barElement, index) => {
-      const currentValue = actualData[index]
+      const currentValue = actualData[index] || null
       if (currentValue == null || !Number.isFinite(Number(currentValue))) return
 
       const centerX = barElement.x
@@ -247,16 +247,37 @@ const renderChart = () => {
 
   destroyChart()
 
+  const datasets = buildDatasets()
+  const showLegend = datasets.length > 1
+
   chart = new Chart(ctx, {
     data: {
       labels: labels.value,
-      datasets: buildDatasets(),
+      datasets,
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          display: showLegend,
+          position: 'top',
+          labels: {
+            generateLabels: (chart) => {
+              const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart)
+              return defaultLabels.map((label) => {
+                if (label.text.includes('实际完成')) {
+                  return {
+                    ...label,
+                    fillStyle: 'rgba(76, 175, 80, 0.85)',
+                    strokeStyle: 'rgba(76, 175, 80, 1)',
+                  }
+                }
+                return label
+              })
+            },
+          },
+        },
         tooltip: {
           callbacks: {
             label: (context) => `${context.dataset.label}: ${context.parsed.y ?? 0} ${props.chartConfig.valueUnit || '万元'}`,

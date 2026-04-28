@@ -95,13 +95,12 @@ const valuePlugin = {
 
 			const x = bar.x
 			const valueText = `${Math.round(value)}`
-			const unitText = '万元'
 			const barHeight = Math.abs(bar.base - bar.y)
 			const showOutside = barHeight < 30
 
 			if (showOutside) {
 				const isPositive = value >= 0
-				const badgeWidth = Math.max(ctx.measureText(`${valueText}${unitText}`).width + 18, 56)
+				const badgeWidth = Math.max(ctx.measureText(`${valueText}`).width + 18, 56)
 				const badgeHeight = 20
 				const by = isPositive ? bar.y - 28 : bar.base + 8
 				const bx = x - badgeWidth / 2
@@ -122,8 +121,7 @@ const valuePlugin = {
 				const centerY = bar.y + (bar.base - bar.y) / 2
 				ctx.fillStyle = '#f8fafc'
 				ctx.font = 'bold 11px sans-serif'
-				ctx.fillText(valueText, x, centerY - 3)
-				ctx.fillText(unitText, x, centerY + 11)
+				ctx.fillText(valueText, x, centerY + 4)
 			}
 		})
 
@@ -194,7 +192,15 @@ const renderChart = () => {
 		scales: {
 			y: {
 				beginAtZero: true,
-				ticks: { callback: (v) => `${v}万元` },
+				title: {
+					display: true,
+					text: '万元',
+					color: '#64748b',
+					font: {
+						size: 12,
+						weight: '600',
+					},
+				},
 				grid: { color: '#eef2f7' },
 			},
 			x: {

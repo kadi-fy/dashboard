@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="dynamic-chart">
     <canvas ref="canvasRef"></canvas>
   </div>

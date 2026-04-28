@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <Transition name="modal">
       <div
@@ -111,7 +111,8 @@ const targetValues = computed(() =>
   showTarget.value
     ? Array.from({ length: 12 }, (_, i) => {
       const month = i + 1
-      return Number(((annualPlan.value * month) / 12).toFixed(2))
+      const integerPlan = Math.round(annualPlan.value)
+      return Math.round((integerPlan * month) / 12)
     })
     : [],
 )

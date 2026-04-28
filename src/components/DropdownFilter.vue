@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="relative inline-flex">
     <button
       ref="trigger"
@@ -78,6 +78,7 @@
 </template>
 
 <script>
+// 用途：筛选条件下拉面板，用于快速勾选与应用过滤项。
 import { ref, onMounted, onUnmounted } from 'vue'
 
 export default {

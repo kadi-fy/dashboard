@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="relative">
     <flat-pickr
       class="form-input pl-9 dark:bg-gray-800 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 font-medium w-[9rem] text-xs py-1.5"
@@ -185,5 +185,53 @@ export default {
 .flatpickr-calendar .flatpickr-prev-month:hover,
 .flatpickr-calendar .flatpickr-next-month:hover {
   background: rgba(148, 163, 184, 0.18);
+}
+
+/* MonthSelect: make enabled/disabled months clearly different in dark mode */
+.flatpickr-calendar .flatpickr-monthSelect-month {
+  color: #334155;
+  background: transparent;
+}
+
+.flatpickr-calendar .flatpickr-monthSelect-month:not(.flatpickr-disabled):not([aria-disabled='true']):hover {
+  background: rgba(99, 102, 241, 0.12);
+  color: #1e293b;
+}
+
+.flatpickr-calendar .flatpickr-monthSelect-month.selected,
+.flatpickr-calendar .flatpickr-monthSelect-month.startRange,
+.flatpickr-calendar .flatpickr-monthSelect-month.endRange {
+  background: #4f46e5;
+  color: #eef2ff;
+}
+
+.flatpickr-calendar .flatpickr-monthSelect-month.flatpickr-disabled,
+.flatpickr-calendar .flatpickr-monthSelect-month[aria-disabled='true'] {
+  color: #94a3b8 !important;
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dark .flatpickr-calendar .flatpickr-monthSelect-month {
+  color: #cbd5e1;
+}
+
+.dark .flatpickr-calendar .flatpickr-monthSelect-month:not(.flatpickr-disabled):not([aria-disabled='true']):hover {
+  background: rgba(129, 140, 248, 0.2);
+  color: #f1f5f9;
+}
+
+.dark .flatpickr-calendar .flatpickr-monthSelect-month.selected,
+.dark .flatpickr-calendar .flatpickr-monthSelect-month.startRange,
+.dark .flatpickr-calendar .flatpickr-monthSelect-month.endRange {
+  background: #6366f1;
+  color: #f8fafc;
+}
+
+.dark .flatpickr-calendar .flatpickr-monthSelect-month.flatpickr-disabled,
+.dark .flatpickr-calendar .flatpickr-monthSelect-month[aria-disabled='true'] {
+  color: #64748b !important;
+  opacity: 0.38;
 }
 </style>

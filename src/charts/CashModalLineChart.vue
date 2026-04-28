@@ -122,7 +122,13 @@ const renderChart = () => {
         },
         tooltip: {
           callbacks: {
-            label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.parsed.y || 0).toFixed(1)} 万元`,
+            label: (ctx) => {
+              const value = Number(ctx.parsed.y || 0)
+              const displayValue = ctx.dataset.label === '年度目标'
+                ? `${Math.round(value)}`
+                : value.toFixed(1)
+              return `${ctx.dataset.label}: ${displayValue} 万元`
+            },
           },
         },
       },

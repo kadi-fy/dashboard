@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <Transition name="modal">
     <div
@@ -104,13 +104,12 @@ const lastYearCharges = computed(() => {
 })
 
 const annualPlan = computed(() =>
-  props.currentYearData.length > 0 ? props.currentYearData[0].contract_plan : 0
+  props.currentYearData.length > 0 ? Math.round(Number(props.currentYearData[0].contract_plan) || 0) : 0
 )
 
 const monthlyChargeTarget = computed(() => {
   if (annualPlan.value <= 0) return []
-  const monthly = (annualPlan.value / 12).toFixed(0)
-  return months.value.map((_, i) => (monthly * (i + 1)))
+  return months.value.map((_, i) => Math.round((annualPlan.value * (i + 1)) / 12))
 })
 
 const growthRates = computed(() => {
@@ -270,7 +269,24 @@ const initChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          position: 'top',
+          labels: {
+            generateLabels: (chart) => {
+              const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart)
+              return defaultLabels.map((label) => {
+                if (label.text.includes('实际完成')) {
+                  return {
+                    ...label,
+                    fillStyle: 'rgba(76, 175, 80, 0.85)',
+                    strokeStyle: 'rgba(76, 175, 80, 1)',
+                  }
+                }
+                return label
+              })
+            },
+          },
+        },
         tooltip: {
           callbacks: {
             label: (context) => {

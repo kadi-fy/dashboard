@@ -108,7 +108,7 @@ const totalLabelPlugin = {
 			const sharedHeight = sharedBar ? Math.abs(directTop - sharedBar.y) : 0
 
 			// 顶端显示合计值标签
-			const totalText = `${formatAmount(total)}万`
+			const totalText = `${formatAmount(total)}`
 			const badgeW = ctx.measureText(totalText).width + 14
 			const badgeH = 18
 			const bx = bar.x - badgeW / 2
@@ -248,9 +248,17 @@ const renderChart = () => {
 			y: {
 				beginAtZero: true,
 				ticks: {
-					callback: (v) => `${v}万`,
 					color: '#64748b',
 					font: { size: 11 },
+				},
+				title: {
+					display: true,
+					text: '万元',
+					color: '#64748b',
+					font: {
+						size: 12,
+						weight: '600',
+					},
 				},
 				grid: {
 					color: 'rgba(148, 163, 184, 0.2)',

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="flex items-center justify-center space-x-4 sm:space-x-6 h-full overflow-hidden relative">
     <div class="flex items-center flex-1 min-w-0 group" @mouseenter="pauseMarquee('decline')" @mouseleave="resumeMarquee('decline')">
       <div class="flex flex-col items-center flex-shrink-0 hidden xl:flex mr-3 cursor-pointer select-none" @click="openIssueModalByType('decline')">

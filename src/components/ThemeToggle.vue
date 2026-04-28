@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <input type="checkbox" name="light-switch" id="light-switch" v-model="isDark" class="light-switch sr-only" />
     <label
@@ -24,8 +24,10 @@
 </template>
 
 <script setup>
+// 用途：主题切换按钮，用于明暗模式切换。
 import { useDark } from "@vueuse/core";
 const isDark = useDark({
   selector: 'html',
 })
 </script>
+

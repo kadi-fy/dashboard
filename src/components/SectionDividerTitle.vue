@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="flex items-center justify-between gap-4" :class="wrapperClass">
     <div class="min-w-0">
       <div class="flex items-center gap-3">
@@ -18,6 +18,7 @@
 </template>
 
 <script setup>
+// 用途：分区标题组件，统一展示主标题、副标题与视觉分割线。
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -67,3 +68,4 @@ const accentClass = computed(() => palette.value.accent)
 const subtitleClass = computed(() => palette.value.subtitle)
 const lineClass = computed(() => palette.value.line)
 </script>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <Transition name="modal">
       <div
@@ -129,6 +129,8 @@ const initChart = () => {
 
   destroyChart()
 
+  const showLegend = isChargeContractPer
+
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
@@ -209,7 +211,10 @@ const initChart = () => {
         },
       },
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          display: showLegend,
+          position: 'top',
+        },
         tooltip: {
           callbacks: {
             label: (context) => `${context.dataset.label}: ${formatMetricValue(context.parsed.y)}`,
@@ -217,7 +222,18 @@ const initChart = () => {
         },
       },
       scales: {
-        y: { beginAtZero: true },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: !!props.unitLabel,
+            text: props.unitLabel,
+            color: '#64748b',
+            font: {
+              size: 12,
+              weight: '600',
+            },
+          },
+        },
         x: { grid: { display: false } },
       },
     },
