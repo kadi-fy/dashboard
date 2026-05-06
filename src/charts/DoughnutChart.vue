@@ -321,31 +321,6 @@ const metaTargetStyle = computed(() => ({
   opacity: 0.8;
 }
 
-.gauge-center::before {
-  content: '';
-  position: absolute;
-  inset: 22.5%;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.2) 42%, rgba(255, 255, 255, 0.08) 100%),
-    linear-gradient(170deg, rgba(236, 254, 255, 0.55) 0%, rgba(224, 231, 255, 0.32) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.16), 0 0 16px rgba(56, 189, 248, 0.2);
-  backdrop-filter: blur(12px) saturate(1.22);
-  -webkit-backdrop-filter: blur(12px) saturate(1.22);
-  z-index: 0;
-}
-
-.gauge-center::after {
-  content: '';
-  position: absolute;
-  inset: 24.5% 25% 53% 25%;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(125, 211, 252, 0.16) 100%);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .gauge-center {
   position: absolute;
   inset: 0;
@@ -415,14 +390,6 @@ const metaTargetStyle = computed(() => ({
   50% {
     transform: translateY(-1.5px);
   }
-}
-
-:global(.dark) .gauge-center::before {
-  background:
-    radial-gradient(circle at 28% 22%, rgba(226, 232, 240, 0.24) 0%, rgba(71, 85, 105, 0.2) 45%, rgba(15, 23, 42, 0.3) 100%),
-    linear-gradient(170deg, rgba(15, 23, 42, 0.64) 0%, rgba(2, 6, 23, 0.46) 100%);
-  border-color: rgba(125, 211, 252, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.24), 0 0 20px rgba(56, 189, 248, 0.24);
 }
 
 :global(.dark) .gauge-core {
