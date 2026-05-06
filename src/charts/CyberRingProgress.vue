@@ -29,6 +29,19 @@
             :class="tick.active ? 'is-overflow-active' : 'is-overflow-inactive'"
           />
         </g>
+
+        <g>
+          <line
+            v-for="tick in timelinePlanTicks"
+            :key="`plan-${tick.index}`"
+            :x1="tick.x1"
+            :y1="tick.y1"
+            :x2="tick.x2"
+            :y2="tick.y2"
+            :style="tick.style"
+            class="cyber-tick cyber-tick-plan"
+          />
+        </g>
       </svg>
 
       <div class="cyber-center">
@@ -73,6 +86,7 @@ const props = defineProps({
   greenColor: { type: String, default: '#22c55e' },
   yellowColor: { type: String, default: '#eab308' },
   redColor: { type: String, default: '#ef4444' },
+  planMarkerColor: { type: String, default: '#eab308' },
 })
 
 const rawPercent = computed(() => {
@@ -94,12 +108,16 @@ const displayPercent = computed(() => {
   return Number(n.toFixed(Math.max(0, props.decimals)))
 })
 
+const normalizedTickCount = computed(() => {
+  return Math.max(12, Number(props.tickCount) || 48)
+})
+
 const activeTickCount = computed(() => {
-  return Math.round((ringPercent.value / 100) * props.tickCount)
+  return Math.round((ringPercent.value / 100) * normalizedTickCount.value)
 })
 
 const overflowTickCount = computed(() => {
-  return Math.round((overflowPercent.value / 100) * props.tickCount)
+  return Math.round((overflowPercent.value / 100) * normalizedTickCount.value)
 })
 
 const timelinePlanPercent = computed(() => {
@@ -117,6 +135,17 @@ const resolvedActiveColor = computed(() => {
   if (rawPercent.value >= plan) return props.greenColor
   if (rawPercent.value > plan * 0.8) return props.yellowColor
   return props.redColor
+})
+
+const timelinePlanTickIndex = computed(() => {
+  const count = normalizedTickCount.value
+  const ratio = Math.max(0, Math.min(1, timelinePlanPercent.value / 100))
+  return Math.max(0, Math.min(count - 1, Math.round(ratio * count) - 1))
+})
+
+const planMarkerIndices = computed(() => {
+  const targetIndex = timelinePlanTickIndex.value
+  return new Set([targetIndex])
 })
 
 const withAlpha = (color, alpha) => {
@@ -155,25 +184,29 @@ const formatTarget = (value) => {
 
 const toRad = (deg) => deg * (Math.PI / 180)
 
-const ticks = computed(() => {
-  const count = Math.max(12, Number(props.tickCount) || 48)
+const buildTick = (index, count, innerRadius, outerRadius) => {
   const startDeg = -90
   const step = 360 / count
+  const deg = startDeg + index * step
+  const rad = toRad(deg)
+
+  return {
+    index,
+    x1: 60 + Math.cos(rad) * innerRadius,
+    y1: 60 + Math.sin(rad) * innerRadius,
+    x2: 60 + Math.cos(rad) * outerRadius,
+    y2: 60 + Math.sin(rad) * outerRadius,
+  }
+}
+
+const ticks = computed(() => {
+  const count = normalizedTickCount.value
 
   return Array.from({ length: count }, (_, i) => {
-    const deg = startDeg + i * step
-    const rad = toRad(deg)
-    const x1 = 60 + Math.cos(rad) * props.innerRadius
-    const y1 = 60 + Math.sin(rad) * props.innerRadius
-    const x2 = 60 + Math.cos(rad) * props.outerRadius
-    const y2 = 60 + Math.sin(rad) * props.outerRadius
+    const tick = buildTick(i, count, props.innerRadius, props.outerRadius)
 
     return {
-      index: i,
-      x1,
-      y1,
-      x2,
-      y2,
+      ...tick,
       active: i < activeTickCount.value,
       style: { '--tick-delay': `${i * 72}ms` },
     }
@@ -181,28 +214,29 @@ const ticks = computed(() => {
 })
 
 const overflowTicks = computed(() => {
-  const count = Math.max(12, Number(props.tickCount) || 48)
-  const startDeg = -90
-  const step = 360 / count
+  const count = normalizedTickCount.value
 
   return Array.from({ length: count }, (_, i) => {
-    const deg = startDeg + i * step
-    const rad = toRad(deg)
-    const x1 = 60 + Math.cos(rad) * props.overflowInnerRadius
-    const y1 = 60 + Math.sin(rad) * props.overflowInnerRadius
-    const x2 = 60 + Math.cos(rad) * props.overflowOuterRadius
-    const y2 = 60 + Math.sin(rad) * props.overflowOuterRadius
+    const tick = buildTick(i, count, props.overflowInnerRadius, props.overflowOuterRadius)
 
     return {
-      index: i,
-      x1,
-      y1,
-      x2,
-      y2,
+      ...tick,
       active: i < overflowTickCount.value,
       style: { '--tick-delay': `${i * 72}ms` },
     }
   })
+})
+
+const timelinePlanTicks = computed(() => {
+  const count = normalizedTickCount.value
+  const indices = planMarkerIndices.value
+
+  return Array.from(indices)
+    .sort((a, b) => a - b)
+    .map((index) => ({
+      ...buildTick(index, count, props.innerRadius - 4, props.outerRadius + 4),
+      style: { '--plan-delay': `${index * 72}ms` },
+    }))
 })
 
 const wrapStyle = computed(() => ({
@@ -217,6 +251,9 @@ const wrapStyle = computed(() => ({
   '--ring-overflow-soft': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.16) : 'transparent',
   '--ring-overflow-glow': overflowTickCount.value > 0 ? withAlpha(props.overflowColor, 0.34) : 'transparent',
   '--ring-overflow-strong': withAlpha(props.overflowColor, 0.92),
+  '--ring-plan': props.planMarkerColor,
+  '--ring-plan-soft': withAlpha(props.planMarkerColor, 0.24),
+  '--ring-plan-strong': withAlpha(props.planMarkerColor, 0.95),
   '--ring-inactive': props.inactiveColor,
 }))
 
@@ -350,6 +387,15 @@ onBeforeUnmount(() => {
 .cyber-tick-overflow.is-overflow-inactive {
   stroke: transparent;
   opacity: 0;
+}
+
+.cyber-tick-plan {
+  stroke: var(--ring-plan);
+  stroke-width: 4.2;
+  opacity: 0.98;
+  filter: drop-shadow(0 0 7px var(--ring-plan));
+  animation: tickPlanPulse 2.2s ease-in-out infinite;
+  animation-delay: var(--plan-delay, 0ms);
 }
 
 .cyber-center {
@@ -506,6 +552,20 @@ onBeforeUnmount(() => {
     opacity: 0.8;
     stroke: var(--ring-overflow);
     stroke-width: 2.15;
+  }
+}
+
+@keyframes tickPlanPulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    stroke: var(--ring-plan-soft);
+    stroke-width: 3.5;
+  }
+  50% {
+    opacity: 1;
+    stroke: var(--ring-plan-strong);
+    stroke-width: 4.6;
   }
 }
 </style>
