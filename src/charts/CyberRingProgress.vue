@@ -140,7 +140,8 @@ const resolvedActiveColor = computed(() => {
 const timelinePlanTickIndex = computed(() => {
   const count = normalizedTickCount.value
   const ratio = Math.max(0, Math.min(1, timelinePlanPercent.value / 100))
-  return Math.max(0, Math.min(count - 1, Math.round(ratio * count) - 1))
+  const index = Math.round(ratio * count) % count
+  return Math.max(0, Math.min(count - 1, index))
 })
 
 const planMarkerIndices = computed(() => {
@@ -234,7 +235,7 @@ const timelinePlanTicks = computed(() => {
   return Array.from(indices)
     .sort((a, b) => a - b)
     .map((index) => ({
-      ...buildTick(index, count, props.innerRadius - 4, props.outerRadius + 4),
+      ...buildTick(index, count, props.innerRadius, props.outerRadius),
       style: { '--plan-delay': `${index * 72}ms` },
     }))
 })
@@ -390,12 +391,10 @@ onBeforeUnmount(() => {
 }
 
 .cyber-tick-plan {
-  stroke: var(--ring-plan);
-  stroke-width: 4.2;
-  opacity: 0.98;
-  filter: drop-shadow(0 0 7px var(--ring-plan));
-  animation: tickPlanPulse 2.2s ease-in-out infinite;
-  animation-delay: var(--plan-delay, 0ms);
+  stroke: var(--ring-plan-strong);
+  stroke-width: 2.4;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px var(--ring-plan)) drop-shadow(0 0 10px var(--ring-plan-soft));
 }
 
 .cyber-center {
@@ -555,17 +554,4 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes tickPlanPulse {
-  0%,
-  100% {
-    opacity: 0.7;
-    stroke: var(--ring-plan-soft);
-    stroke-width: 3.5;
-  }
-  50% {
-    opacity: 1;
-    stroke: var(--ring-plan-strong);
-    stroke-width: 4.6;
-  }
-}
 </style>

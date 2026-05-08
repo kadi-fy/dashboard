@@ -339,9 +339,12 @@
                               :style="{ left: 'calc(' + getBehindSeqPercent() + '% - 1px)' }"
                             >
                               <div class="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/70 px-1 rounded">时序目标</div>
+                              <div class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-amber-600 dark:text-amber-300" style="top: calc(100% + 0.75rem);">
+                                {{ getBehindSeqPercent() }}%
+                              </div>
                             </div>
                           </div>
-                          <div class="flex justify-between mt-1.5 text-[10px] text-gray-400 dark:text-gray-500">
+                          <div class="flex justify-between mt-3 text-[10px] text-gray-400 dark:text-gray-500">
                             <span>0</span>
                             <span>年度计划 100%</span>
                           </div>

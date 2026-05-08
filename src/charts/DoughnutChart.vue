@@ -33,13 +33,14 @@
           :stroke-dasharray="overflowCircumference"
           :stroke-dashoffset="overflowDashoffset"
         />
+
       </svg>
 
       <div class="gauge-ticks"></div>
       <div class="gauge-center">
         <div class="gauge-value">
-          <span class="gauge-value-number">{{ displayPercent }}</span>
-          <span class="gauge-value-unit">%</span>
+          <span class="gauge-value-number" :style="centerValueStyle">{{ displayPercent }}</span>
+          <span class="gauge-value-unit" :style="centerValueStyle">%</span>
         </div>
       </div>
     </div>
@@ -64,6 +65,7 @@ const props = defineProps({
   width: { type: [Number, String], default: 100 },
   height: { type: [Number, String], default: 100 },
   label: { type: String, default: '' },
+  planMarkerColor: { type: String, default: '#eab308' },
 })
 
 const size = computed(() => {
@@ -132,6 +134,12 @@ const overflowDashoffset = computed(() => {
   return overflowCircumference * (1 - progress)
 })
 
+const planAngleDeg = computed(() => {
+  const ratio = Math.max(0, Math.min(1, timelinePlanPercent.value / 100))
+  const deg = ratio * 360
+  return deg >= 360 ? 0 : deg
+})
+
 const haloStyle = computed(() => ({
   background: `radial-gradient(circle at 50% 45%, ${gaugeColor.value}44 0%, transparent 68%)`,
 }))
@@ -164,6 +172,10 @@ const gaugeWrapStyle = computed(() => ({
   '--gauge-accent-glow': withAlpha(gaugeColor.value, 0.58),
   '--gauge-overflow-accent': withAlpha(overflowColor.value, 1),
   '--gauge-overflow-soft': 'transparent',
+  '--gauge-plan': withAlpha(props.planMarkerColor, 0.98),
+  '--gauge-plan-soft': withAlpha(props.planMarkerColor, 0.34),
+  '--gauge-plan-strong': withAlpha(props.planMarkerColor, 1),
+  '--gauge-plan-angle': `${planAngleDeg.value}deg`,
 }))
 
 const formatTarget = (v) => {
@@ -182,6 +194,10 @@ const metaLabelStyle = computed(() => ({
 const metaTargetStyle = computed(() => ({
   color: isDark.value ? '#ffffff' : '#334155',
   textShadow: isDark.value ? '0 1px 2px rgba(2, 6, 23, 0.55)' : 'none',
+}))
+
+const centerValueStyle = computed(() => ({
+  color: isDark.value ? '#ffffff' : '#334155',
 }))
 </script>
 
@@ -317,8 +333,26 @@ const metaTargetStyle = computed(() => ({
   transform: rotate(-90deg);
   -webkit-mask: radial-gradient(circle, transparent 73%, #000 73.6%, #000 74.7%, transparent 75.4%);
   mask: radial-gradient(circle, transparent 73%, #000 73.6%, #000 74.7%, transparent 75.4%);
-  background: repeating-conic-gradient(rgba(148, 163, 184, 0.2) 0deg 0.9deg, transparent 0.9deg 16deg);
-  opacity: 0.8;
+  background:
+    conic-gradient(
+      from calc(var(--gauge-plan-angle) - 1.2deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--gauge-plan-soft) 88%, #ffffff 12%) 0.35deg,
+      color-mix(in srgb, var(--gauge-plan) 80%, #ffffff 20%) 1.15deg,
+      transparent 1.15deg,
+      transparent 360deg
+    ),
+    conic-gradient(
+      from calc(var(--gauge-plan-angle) - 0.42deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--gauge-plan-strong) 86%, #ffffff 14%) 0.18deg,
+      color-mix(in srgb, var(--gauge-plan-strong) 86%, #ffffff 14%) 0.84deg,
+      transparent 0.84deg,
+      transparent 360deg
+    ),
+    repeating-conic-gradient(rgba(148, 163, 184, 0.2) 0deg 0.9deg, transparent 0.9deg 16deg);
+  opacity: 1;
+  filter: drop-shadow(0 0 6px var(--gauge-plan)) drop-shadow(0 0 12px var(--gauge-plan-soft));
 }
 
 .gauge-center {
@@ -411,12 +445,43 @@ const metaTargetStyle = computed(() => ({
 }
 
 :global(.dark) .gauge-ticks {
-  background: repeating-conic-gradient(rgba(125, 211, 252, 0.32) 0deg 0.9deg, transparent 0.9deg 16deg);
+  background:
+    conic-gradient(
+      from calc(var(--gauge-plan-angle) - 1.2deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--gauge-plan-soft) 62%, #ffffff 38%) 0.35deg,
+      color-mix(in srgb, var(--gauge-plan) 72%, #ffffff 28%) 1.15deg,
+      transparent 1.15deg,
+      transparent 360deg
+    ),
+    conic-gradient(
+      from calc(var(--gauge-plan-angle) - 0.42deg),
+      transparent 0deg,
+      color-mix(in srgb, var(--gauge-plan-strong) 74%, #ffffff 26%) 0.18deg,
+      color-mix(in srgb, var(--gauge-plan-strong) 74%, #ffffff 26%) 0.84deg,
+      transparent 0.84deg,
+      transparent 360deg
+    ),
+    repeating-conic-gradient(rgba(125, 211, 252, 0.32) 0deg 0.9deg, transparent 0.9deg 16deg);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--gauge-plan) 72%, #ffffff 28%)) drop-shadow(0 0 14px color-mix(in srgb, var(--gauge-plan-soft) 74%, #ffffff 26%));
 }
 
 :global(.dark) .gauge-value {
   color: var(--gauge-text-color-dark);
   text-shadow: none;
+}
+
+:global(.dark) .gauge-value-number,
+:global(html.dark) .gauge-value-number,
+:global(body.dark) .gauge-value-number,
+:global([data-theme='dark']) .gauge-value-number,
+:global([data-mode='dark']) .gauge-value-number,
+:global(.dark) .gauge-value-unit,
+:global(html.dark) .gauge-value-unit,
+:global(body.dark) .gauge-value-unit,
+:global([data-theme='dark']) .gauge-value-unit,
+:global([data-mode='dark']) .gauge-value-unit {
+  color: #ffffff !important;
 }
 
 :global(.dark) .gauge-value-unit,
@@ -464,4 +529,12 @@ const metaTargetStyle = computed(() => ({
     transform: scale(1.015);
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .gauge-value-number,
+  .gauge-value-unit {
+    color: #ffffff;
+  }
+}
+
 </style>

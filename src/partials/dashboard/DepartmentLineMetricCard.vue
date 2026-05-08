@@ -60,7 +60,32 @@ import {
   Legend,
 } from 'chart.js'
 
-Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend)
+const zeroBaselinePlugin = {
+  id: 'zeroBaselinePlugin',
+  afterDraw(chart, _args, pluginOptions) {
+    if (!pluginOptions?.enabled) return
+
+    const yScale = chart.scales?.y
+    const area = chart.chartArea
+    if (!yScale || !area) return
+
+    const y = yScale.getPixelForValue(0)
+    if (!Number.isFinite(y) || y < area.top || y > area.bottom) return
+
+    const ctx = chart.ctx
+    ctx.save()
+    ctx.beginPath()
+    ctx.setLineDash(pluginOptions.dash || [8, 6])
+    ctx.lineWidth = pluginOptions.lineWidth || 1.5
+    ctx.strokeStyle = pluginOptions.color || 'rgba(16, 185, 129, 0.78)'
+    ctx.moveTo(area.left, y)
+    ctx.lineTo(area.right, y)
+    ctx.stroke()
+    ctx.restore()
+  },
+}
+
+Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, zeroBaselinePlugin)
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -177,7 +202,7 @@ const renderChart = () => {
       data: values,
       borderColor: props.primaryColor,
       backgroundColor: 'rgba(37, 99, 235, 0.12)',
-      fill: true,
+      fill: false,
       borderWidth: 2,
       pointRadius: 3,
       pointHoverRadius: 6,
@@ -218,6 +243,12 @@ const renderChart = () => {
     },
     plugins: {
       legend: { display: false },
+      zeroBaselinePlugin: {
+        enabled: props.metricType === 'line-profit-per',
+        color: 'rgba(16, 185, 129, 0.78)',
+        dash: [8, 6],
+        lineWidth: 1.6,
+      },
       tooltip: {
         callbacks: {
           label: (context) => {

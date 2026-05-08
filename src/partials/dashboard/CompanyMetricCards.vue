@@ -304,7 +304,7 @@ const modalCurrentValues = computed(() => {
   const field = activeMetric.value.field
   return allCurrentYear.value.map(r => {
     const v = Number(r[field] ?? 0)
-    return activeMetric.value.isPercent ? (Math.abs(v) <= 1 ? v * 100 : v) : v
+    return activeMetric.value.isPercent ? (normalizePercentValue(v, activeMetric.value) ?? 0) : v
   })
 })
 
@@ -313,7 +313,7 @@ const modalLastYearValues = computed(() => {
   const field = activeMetric.value.field
   return allLastYear.value.map(r => {
     const v = Number(r[field] ?? 0)
-    return activeMetric.value.isPercent ? (Math.abs(v) <= 1 ? v * 100 : v) : v
+    return activeMetric.value.isPercent ? (normalizePercentValue(v, activeMetric.value) ?? 0) : v
   })
 })
 
@@ -348,17 +348,21 @@ const isGood = (metric) => {
   return metric.higherIsBetter ? diff > 0 : diff < 0
 }
 
-const normalizePercentValue = (val) => {
+const normalizePercentValue = (val, metric) => {
   const n = Number(val)
   if (Number.isNaN(n)) return null
-  // API returns ratio values like 0.4838; display as 48.38%
+  // cash_ratio may come as ratio values greater than 1 (e.g. 1.21 means 121%).
+  if (metric?.field === 'cash_ratio') {
+    return Math.abs(n) < 10 ? n * 100 : n
+  }
+  // Other percentage metrics usually come as ratio in [0,1], but keep compatibility for already-percent values.
   return Math.abs(n) <= 1 ? n * 100 : n
 }
 
 const formatYoyChange = (metric) => {
   const diff = yoyChange(metric.field)
   if (diff == null) return '--'
-  const n = metric.isPercent ? normalizePercentValue(diff) : Number(diff)
+  const n = metric.isPercent ? normalizePercentValue(diff, metric) : Number(diff)
   if (n == null || Number.isNaN(n)) return '--'
   return Math.abs(n).toFixed(2)
 }
@@ -366,7 +370,7 @@ const formatYoyChange = (metric) => {
 const formatDisplay = (val, metric) => {
   if (val == null || val === '') return '--'
   const raw = Number(val)
-  const n = metric.isPercent ? normalizePercentValue(raw) : raw
+  const n = metric.isPercent ? normalizePercentValue(raw, metric) : raw
   if (Number.isNaN(n)) return '--'
   if (metric.isPercent) return `${n.toFixed(2)}%`
   if (metric.unit === '万元/人') return `${n.toFixed(1)}万元/人`
