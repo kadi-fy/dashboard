@@ -26,6 +26,14 @@ export default {
       type: String,
       default: '',
     },
+    metricName: {
+      type: String,
+      default: '指标',
+    },
+    currentYear: {
+      type: Number,
+      default: new Date().getFullYear(),
+    },
     width: {
       type: [Number, String],
       default: null,
@@ -100,6 +108,11 @@ export default {
       }).format(n)}${unit || ''}`
     }
 
+    const resolveCurrentYear = () => {
+      const parsed = Number.parseInt(String(props.currentYear), 10)
+      return Number.isFinite(parsed) ? parsed : new Date().getFullYear()
+    }
+
     const options = computed(() => ({
       layout: {
         padding: {
@@ -145,8 +158,17 @@ export default {
         },
         tooltip: {
           callbacks: {
-            title: (items) => (items?.[0]?.label ? `${items[0].label}` : ''),
-            label: (ctx) => `${ctx.dataset.label}: ${formatByUnit(ctx.parsed.y, props.unit)}`,
+            title: (items) => {
+              const monthLabel = items?.[0]?.label || ''
+              if (!monthLabel) return props.metricName
+              return `${props.metricName}`
+            },
+            label: (ctx) => {
+              const monthLabel = ctx.label || ''
+              const currentYear = resolveCurrentYear()
+              const year = ctx.datasetIndex === 0 ? currentYear : currentYear - 1
+              return `${year}年${monthLabel}: ${formatByUnit(ctx.parsed.y, props.unit)}`
+            },
           },
           backgroundColor: darkMode.value ? '#0f172a' : '#111827',
           borderColor: darkMode.value ? '#334155' : '#1f2937',
@@ -157,7 +179,7 @@ export default {
       },
       interaction: {
         intersect: false,
-        mode: 'nearest',
+        mode: 'index',
       },
       maintainAspectRatio: false,
       resizeDelay: 0,

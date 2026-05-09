@@ -99,7 +99,9 @@
                 v-if="modalChartReady"
                 :current-values="modalCurrentValues"
                 :lastyear-values="modalLastYearValues"
+                :metric-name="activeMetric?.label ?? '指标'"
                 :unit="activeMetric?.unit ?? ''"
+                :current-year="props.selectedYear"
                 width="100%"
                 height="320"
               />

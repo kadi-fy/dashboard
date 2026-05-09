@@ -331,8 +331,15 @@
                               :class="getBehindCurrentPercent(item) >= getBehindSeqPercent() ? 'bg-gradient-to-r from-emerald-400 to-green-500' : 'bg-gradient-to-r from-red-500 via-rose-500 to-amber-500'"
                               :style="{ width: Math.min(getBehindCurrentPercent(item), 100) + '%' }"
                             >
-                              <span v-if="getBehindCurrentPercent(item) >= 22" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/95 font-semibold">{{ getBehindCurrentPercent(item) }}%</span>
+                              <span v-if="getBehindCurrentPercent(item) >= 5" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/95 font-semibold">{{ getBehindCurrentPercent(item) }}%</span>
                             </div>
+                            <span
+                              v-if="getBehindCurrentPercent(item) > 0 && getBehindCurrentPercent(item) < 5"
+                              class="absolute top-1/2 -translate-y-1/2 text-[10px] text-red-600 dark:text-red-300 font-semibold whitespace-nowrap"
+                              :style="{ left: 'calc(' + Math.min(getBehindCurrentPercent(item), 100) + '% + 6px)' }"
+                            >
+                              {{ getBehindCurrentPercent(item) }}%
+                            </span>
                             <!-- 时序计划目标标记线 -->
                             <div
                               class="absolute top-0 h-full w-0.5 bg-amber-500 dark:bg-amber-400 z-10 rounded-full"

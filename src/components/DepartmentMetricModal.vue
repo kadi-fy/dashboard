@@ -224,7 +224,7 @@ const costValueLabelPlugin = {
       meta.data.forEach((bar, i) => {
         const value = toNum(dataset.data[i])
         if (value <= 0) return
-        ctx.fillText(`${Math.round(value)}`, bar.x, bar.y + bar.height / 2)
+        ctx.fillText(`${Math.round(value)}万元`, bar.x, bar.y + bar.height / 2)
       })
     })
 
@@ -251,9 +251,10 @@ const profitValueLabelPlugin = {
       const rawValue = ds.data[i]
       if (rawValue == null) return
       const value = toNum(rawValue)
-      const y = value >= 0 ? bar.y - 10 : bar.y + 12
-      ctx.fillStyle = value >= 0 ? '#16a34a' : '#ef4444'
-      ctx.fillText(`${Math.round(value)}`, bar.x, y)
+      if (value === 0) return
+      const centerY = (bar.y + bar.base) / 2
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(`${Math.round(value)}万元`, bar.x, centerY)
     })
 
     ctx.restore()
